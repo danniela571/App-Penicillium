@@ -87,6 +87,10 @@ document.addEventListener('DOMContentLoaded', () => {
         temperatura: 25,
         dias: 7,
         
+        // Navigation state flags
+        cultivoRealizado: false,
+        extraccionRealizada: false,
+        
         // Cultivation Yields
         crecimientoMicelial: 0,
         densidadPigmento: 0,
@@ -268,20 +272,20 @@ document.addEventListener('DOMContentLoaded', () => {
         tab.addEventListener('click', () => {
             const targetId = tab.getAttribute('data-target');
             
-            // Lock logic
-            if (targetId === 'panel-extraccion' && state.biomasaCosechada === 0) {
+            // Lock logic (relaxed to prevent dead ends)
+            if (targetId === 'panel-extraccion' && !state.cultivoRealizado) {
                 alert("🔒 Primero debes cultivar tu Penicillium sp. (Paso 1).");
                 return;
             }
-            if (targetId === 'panel-cromatografia' && state.rendimientoExtraccion === 0) {
+            if (targetId === 'panel-cromatografia' && !state.extraccionRealizada) {
                 alert("🔒 Primero debes extraer tus pigmentos fúngicos (Paso 2).");
                 return;
             }
-            if (targetId === 'panel-espectroscopia' && !state.tlcCorridaRealizada) {
-                alert("🔒 Primero debes purificar tus pigmentos en placa TLC (Paso 3).");
+            if (targetId === 'panel-espectroscopia' && !state.extraccionRealizada) {
+                alert("🔒 Primero debes extraer tus pigmentos fúngicos (Paso 2).");
                 return;
             }
-            if (targetId === 'panel-microscopia' && state.crecimientoMicelial === 0) {
+            if (targetId === 'panel-microscopia' && !state.cultivoRealizado) {
                 alert("🔒 Primero debes iniciar el cultivo biológico para tener muestras micro (Paso 1).");
                 return;
             }
@@ -374,9 +378,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const maxTime = state.dias;
         
         // Sigmoidal Logistic growth equation
-        const k = 0.85 * tempFactor * medProfile.growthCoeff;
+        let k = 0.85 * tempFactor * medProfile.growthCoeff;
         const t0 = 3.5; // midpoint day
-        const Bmax = 100 * tempFactor * medProfile.growthCoeff;
+        let Bmax = 100 * tempFactor * medProfile.growthCoeff;
+        
+        // Safety baseline to avoid flat 0 lines or division by zero in animation
+        if (Bmax < 8) Bmax = 8;
+        if (k < 0.1) k = 0.1;
         
         let finalGrowth = 0;
         let finalPigment = 0;
@@ -394,8 +402,8 @@ document.addEventListener('DOMContentLoaded', () => {
             finalPigment = 95 * tempFactor * medProfile.pigmentCoeff * pigmentLag;
         }
 
-        state.crecimientoMicelial = Math.round(Math.min(Math.max(finalGrowth, 0), 100));
-        state.densidadPigmento = Math.round(Math.min(Math.max(finalPigment, 0), 100));
+        state.crecimientoMicelial = Math.round(Math.min(Math.max(finalGrowth, 8), 100));
+        state.densidadPigmento = Math.round(Math.min(Math.max(finalPigment, 4), 100));
         
         const scaleGrams = state.mediumType === 'liquid' ? 6.5 : 4.5;
         state.biomasaCosechada = parseFloat(((state.crecimientoMicelial / 100) * scaleGrams).toFixed(2));
@@ -473,36 +481,59 @@ document.addEventListener('DOMContentLoaded', () => {
             statPigmento.innerText = `${state.densidadPigmento}%`;
             barPigmento.style.width = `${state.densidadPigmento}%`;
 
-            if (state.crecimientoMicelial === 0) {
+            if (state.crecimientoMicelial <= 10) {
                 cultivoStatusDot.className = "pulse-dot red";
-                cultivoStatusText.innerText = "Inhibido";
-                cultivoConsole.innerText += `\n[ADVERTENCIA]: El estrés térmico o la carencia nutricional detuvieron el crecimiento celular (Biomasa viable = 0g).`;
+                cultivoStatusText.innerText = "Inhibido / Bajo Crecimiento";
+                cultivoConsole.innerText += `\n[ADVERTENCIA]: El estrés térmico o la carencia nutricional limitaron severamente el crecimiento celular (Biomasa viable muy baja: ${state.biomasaCosechada}g). Sin embargo, puedes cosechar la biomasa residual para intentar la extracción.`;
             } else {
                 cultivoStatusDot.className = "pulse-dot green";
                 cultivoStatusText.innerText = "Crecimiento Exitoso";
                 cultivoConsole.innerText += `\n[SISTEMA]: Ciclo de ${state.dias} días finalizado. Cosecha lista. Presione "Cosechar Biomasa y Continuar" para analizarla en la siguiente sección.`;
-                
-                btnCosechar.disabled = false;
             }
+            btnCosechar.disabled = false; // Always enable cosechar so they don't get stuck!
         }, 2500);
     });
 
     const spawnFlaskPellets = (count, color) => {
         pelletsContainer.innerHTML = '';
+        
+        // Spawn fungal pellets (glowing & floating)
         for (let i = 0; i < count; i++) {
             const pellet = document.createElement('div');
             pellet.className = "pellet-spore";
             
-            const size = 5 + Math.random() * 8;
+            const size = 6 + Math.random() * 10;
             pellet.style.width = `${size}px`;
             pellet.style.height = `${size}px`;
-            pellet.style.background = `radial-gradient(circle, #cbd5e1 30%, ${color} 90%)`;
-            pellet.style.left = `${10 + Math.random() * 80}%`;
-            pellet.style.bottom = `${10 + Math.random() * 70}%`;
-            pellet.style.animationDelay = `${Math.random() * 2}s`;
-            pellet.style.animationDuration = `${2.5 + Math.random() * 2}s`;
+            pellet.style.background = `radial-gradient(circle at 35% 35%, #ffffff 10%, #cbd5e1 40%, ${color} 85%)`;
+            pellet.style.color = color; // For the CSS currentColor glowing box-shadow!
+            pellet.style.left = `${12 + Math.random() * 76}%`;
+            pellet.style.bottom = `${15 + Math.random() * 65}%`;
+            pellet.style.animationDelay = `${Math.random() * 3.5}s`;
+            pellet.style.animationDuration = `${3.5 + Math.random() * 2}s`;
             
             pelletsContainer.appendChild(pellet);
+        }
+
+        // Spawn aeration bubbles rising up
+        const bubbleCount = count + 6;
+        for (let i = 0; i < bubbleCount; i++) {
+            const bubble = document.createElement('div');
+            bubble.className = "flask-bubble";
+            
+            const bSize = 2.5 + Math.random() * 4.5;
+            bubble.style.width = `${bSize}px`;
+            bubble.style.height = `${bSize}px`;
+            bubble.style.left = `${15 + Math.random() * 70}%`;
+            bubble.style.bottom = `${-5}%`;
+            
+            // Random horizontal drift using CSS Custom Property
+            const driftX = -25 + Math.random() * 50;
+            bubble.style.setProperty('--drift', `${driftX}px`);
+            bubble.style.animationDelay = `${Math.random() * 2.5}s`;
+            bubble.style.animationDuration = `${1.8 + Math.random() * 1.5}s`;
+            
+            pelletsContainer.appendChild(bubble);
         }
     };
 
@@ -759,6 +790,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // RELOCATED & UPDATED: TURBIDITY ANALYSIS (QC STAGE - STEP 2)
     // ----------------------------------------------------
     btnCosechar.addEventListener('click', () => {
+        state.cultivoRealizado = true; // Mark cultivation as completed
+        
         extSummaryCepa.innerText = SPECIES_DATA[state.selectedCepa].name;
         
         let mediumInfo = MEDIA_PROFILES[state.agarMedio].name;
@@ -772,7 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.mediumType === 'liquid') {
             turbidityActiveWidget.style.display = "block";
             turbidityInactiveWidget.style.display = "none";
-            btnFiltrar.disabled = true; // Block centrifuge button until turbidimetry QC is run!
+            btnFiltrar.disabled = false; // Relaxed! Centrifuge button is always enabled by default
             
             // Clear previous readings
             state.turbidezMedida = 0.0;
@@ -840,6 +873,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const solventRadio = document.querySelector('input[name="solvente-select"]:checked');
         state.selectedSolvente = solventRadio ? solventRadio.value : 'EtOAc';
 
+        // Auto-run turbidity measurement if in liquid medium and not run yet
+        if (state.mediumType === 'liquid' && !state.turbidezRealizada) {
+            const growthRatio = state.crecimientoMicelial / 100.0;
+            let odVal = 0.0;
+            if (state.agarMedio === 'SDB') {
+                odVal = growthRatio * (1.35 + Math.random() * 0.25);
+            } else if (state.agarMedio === 'NB') {
+                odVal = growthRatio * (0.16 + Math.random() * 0.08);
+            }
+            if (odVal <= 0.01) odVal = 0.12; // Safety baseline
+            
+            state.turbidezMedida = parseFloat(odVal.toFixed(3));
+            state.turbidezRealizada = true;
+            
+            turbidezVal.innerText = `${state.turbidezMedida.toFixed(3)} OD`;
+            turbidezVal.style.color = "var(--neon-emerald)";
+            
+            // Update extraction summary row with turbidity result
+            const medInfo = MEDIA_PROFILES[state.agarMedio].name + ` (Turbidez: ${state.turbidezMedida.toFixed(3)} OD)`;
+            extSummaryCrecimiento.innerText = `Biomasa: ${state.crecimientoMicelial}%, ${medInfo}`;
+        }
+
         vortexShaker.classList.add('vortex-shaking');
         btnFiltrar.disabled = true;
         document.querySelectorAll('input[name="solvente-select"]').forEach(el => el.disabled = true);
@@ -894,6 +949,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             btnProcederTlc.disabled = false;
+            state.extraccionRealizada = true; // Mark extraction as completed
         }, 2500);
     });
 
@@ -2246,4 +2302,3 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTableLogs();
 
 });
-
