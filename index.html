@@ -642,7 +642,7 @@
                                 <div class="step-circle font-mono">C</div>
                                 <div class="step-info">
                                     <h4>Escaneo de Wavelength</h4>
-                                    <p>Inicia el escaneo automático del espectro visible completo ($300 - 700\text{ nm}$).</p>
+                                    <p>Inicia el escaneo automático del espectro visible completo (300 - 700 nm).</p>
                                     <button id="btn-spec-scan" class="btn-primary ripple" disabled><i class="fa-solid fa-wand-magic-sparkles"></i> Escanear Espectro</button>
                                 </div>
                             </div>
@@ -692,7 +692,7 @@
                         <!-- Scan statistics -->
                         <div class="spec-results-bar" id="spec-results-box" style="display: none;">
                             <div class="spec-res-box">
-                                <span class="res-lbl">Absorción Máxima ($\lambda_{max}$)</span>
+                                <span class="res-lbl">Absorción Máxima (&lambda;<sub>max</sub>)</span>
                                 <span class="res-val text-pink font-mono" id="spec-res-wavelength">0 nm</span>
                             </div>
                             <div class="spec-res-box">
@@ -706,100 +706,107 @@
                         </div>
 
                         <div class="console-box font-mono" id="spec-console">
-                            [ESPECTROSCOPÍA]: Coloca el blanco de calibración para ajustar el detector a cero absorbancia...
+                            [ESPECTROFOTÓMETRO]: Apagado. Realice la calibración del blanco para iniciar...
                         </div>
 
-                        <button id="btn-proceder-microscopio" class="btn-secondary" style="margin-top: 10px;" disabled>
-                            <i class="fa-solid fa-eye"></i> Proceder al Microscopio <i class="fa-solid fa-arrow-right"></i>
+                        <button id="btn-proceder-microscopio" class="btn-secondary" disabled>
+                            <i class="fa-solid fa-chevron-right"></i> Ir a Microscopía Óptica <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- STEP 5: VIRTUAL MICROSCOPE -->
+        <!-- STEP 5: MICROSCOPY -->
         <section id="panel-microscopia" class="panel-section">
             <div class="grid-layout">
-                <!-- Microscope controls -->
+                <!-- Microscope parameters card -->
                 <div class="card glass-card panel-left">
                     <div class="card-header">
-                        <h2><i class="fa-solid fa-sliders text-neon"></i> Controles del Microscopio</h2>
-                        <p class="card-desc">Enfoca y analiza las muestras conidiales o contaminaciones biológicas.</p>
+                        <h2><i class="fa-solid fa-sliders text-emerald"></i> Controles del Microscopio</h2>
+                        <p class="card-desc">Calibra el micrómetro y la platina para observar el cultivo fúngico.</p>
                     </div>
                     <div class="card-body">
                         
-                        <!-- Objective Lenses Selector -->
+                        <!-- Sample Loader -->
                         <div class="input-group">
-                            <label class="input-label"><i class="fa-solid fa-magnifying-glass-plus"></i> Lente Objetivo (Aumento)</label>
-                            <div class="zoom-btn-selector">
-                                <button class="zoom-btn active" data-zoom="100">10x (100x Total)</button>
-                                <button class="zoom-btn" data-zoom="400">40x (400x Estructural)</button>
-                                <button class="zoom-btn" data-zoom="1000">100x (1000x Inmersión)</button>
-                            </div>
-                        </div>
-
-                        <!-- Sample Selector -->
-                        <div class="input-group">
-                            <label class="input-label"><i class="fa-solid fa-clipboard-list"></i> Cargar Portaobjetos (Muestra)</label>
+                            <label class="input-label"><i class="fa-solid fa-folder-open"></i> Seleccionar Muestra de Platina</label>
                             <div class="custom-select-wrapper">
                                 <select id="micro-sample-select" class="custom-select">
-                                    <option value="penicillium_active" selected>Muestra de Penicillium sp. del Cultivo</option>
-                                    <option value="contam_aspergillus">Contaminación Fúngica: Aspergillus sp.</option>
-                                    <option value="contam_rhizopus">Contaminación Fúngica: Rhizopus sp.</option>
-                                    <option value="contam_bacterias">Contaminación Bacteriana: Cocos y Bacilos</option>
+                                    <option value="penicillium_active" selected>Muestra de mi cultivo de Penicillium sp. (Activa)</option>
+                                    <option value="contam_aspergillus">Muestra Contaminada - Aspergillus sp. (Control)</option>
+                                    <option value="contam_rhizopus">Muestra Contaminada - Rhizopus sp. (Control)</option>
+                                    <option value="contam_bacterias">Muestra Contaminada - Colonias Bacterianas (Control)</option>
                                 </select>
                             </div>
                         </div>
 
-                        <!-- Micrometric Focus Slider -->
+                        <!-- Objective Lens Selector -->
+                        <div class="input-group">
+                            <label class="input-label"><i class="fa-solid fa-circle-dot"></i> Lentes Objetivos (Aumento)</label>
+                            <div class="zoom-btn-selector">
+                                <button class="zoom-btn active" data-zoom="100">10x (100x Total)</button>
+                                <button class="zoom-btn" data-zoom="400">40x (400x Total)</button>
+                                <button class="zoom-btn" data-zoom="1000">100x (Ojo/1000x)</button>
+                            </div>
+                        </div>
+
+                        <!-- Focus adjustment slider -->
                         <div class="input-group">
                             <div class="slider-header">
-                                <label class="input-label"><i class="fa-solid fa-circle-nodes"></i> Enfoque Micrométrico</label>
+                                <label class="input-label"><i class="fa-solid fa-arrows-up-down"></i> Ajuste Fino de Enfoque (Micrómetro)</label>
                                 <span class="slider-value" id="focus-val">15</span>
                             </div>
                             <input type="range" id="focus-slider" min="0" max="100" value="15" class="custom-range">
                             <div class="slider-labels">
-                                <span>Muy Borroso</span>
-                                <span>Óptimo (50)</span>
-                                <span>Borroso</span>
+                                <span>Plano Inferior</span>
+                                <span>Enfocado (50)</span>
+                                <span>Plano Superior</span>
                             </div>
                         </div>
 
                         <div class="alert-box warning-alert" id="focus-alert">
-                            <i class="fa-solid fa-circle-exclamation"></i> Ajusta el mando de enfoque para resolver las estructuras.
-                        </div>
-
-                        <!-- Microscope uploader zone -->
-                        <div class="upload-dropzone" id="micro-upload-zone" style="margin-top: 15px; border-style: dotted; border-width: 1px; padding: 12px;">
-                            <i class="fa-solid fa-upload cloud-upload-icon" style="font-size: 18px; margin-bottom: 5px;"></i>
-                            <div class="upload-zone-text" style="font-size: 11px;">
-                                <h4 style="margin:0;">Subir Imagen de tu Microscopio Real</h4>
-                                <p style="margin:2px 0 0 0; font-size:10px;">Adjunta tus observaciones físicas</p>
-                            </div>
-                            <input type="file" id="micro-upload-input" accept="image/*" class="file-hidden-input">
-                        </div>
-
-                        <div class="theory-box-mini font-outfit" id="microscope-guide-text">
-                            Cargando guía de microscopía...
+                            <i class="fa-solid fa-circle-exclamation"></i> Portaobjetos fuera de plano. Mueve el micrómetro para enfocar (Óptimo cerca de 50).
                         </div>
                     </div>
                 </div>
 
-                <!-- Microscope view area -->
+                <!-- Microscope Eyepiece visualizer -->
                 <div class="card glass-card panel-right">
                     <div class="card-header">
-                        <h2><i class="fa-solid fa-circle-dot text-neon"></i> Ocular del Microscopio Virtual</h2>
+                        <h2><i class="fa-solid fa-eye text-emerald"></i> Ocular del Microscopio</h2>
+                        <div class="status-indicator">
+                            <span class="pulse-dot green"></span>
+                            <span>Iluminación LED Activa</span>
+                        </div>
                     </div>
                     <div class="card-body ocular-body-area">
                         
                         <div class="microscope-structure-wrapper">
-                            <div class="microscope-eyepiece">
+                            <!-- Circular lens eyepiece -->
+                            <div class="microscope-eyepiece" id="ocular-view-element">
                                 <div class="ocular-reticle"></div>
-                                <div class="specimen-layer" id="ocular-view-element"></div>
+                                <div class="specimen-layer">
+                                    <canvas id="canvas-microscopia" class="ocular-view-canvas"></canvas>
+                                </div>
                             </div>
                         </div>
 
-                        <button id="btn-proceder-bitacora" class="btn-primary ripple" style="margin-top: 15px;">
+                        <div class="theory-box-mini font-outfit" id="microscope-guide-text" style="margin-top: 15px; width: 100%; min-height: 60px; font-size: 12px; line-height: 1.5;">
+                            Enfoque 100x: Se distingue la densa red de hilos entrelazados de hifas hialinas tabicadas (micelio vegetativo fúngico). La hifa septada es delgada y regular.
+                        </div>
+
+                        <!-- User photo micro uploader -->
+                        <div class="upload-dropzone" id="micro-upload-zone" style="margin-top: 15px; border-color: rgba(16, 185, 129, 0.25); background: rgba(16, 185, 129, 0.01);">
+                            <i class="fa-solid fa-file-image cloud-upload-icon" style="color: #10b981;"></i>
+                            <div class="upload-zone-text">
+                                <h3>Cargar Foto de Microscopio Real</h3>
+                                <p>Sube imágenes capturadas de tu microscopio físico de laboratorio real para archivarlas en la galería.</p>
+                            </div>
+                            <input type="file" id="micro-upload-input" accept="image/*" class="file-hidden-input">
+                        </div>
+
+                        <button id="btn-proceder-bitacora" class="btn-primary ripple" style="margin-top: 15px;" disabled>
                             <i class="fa-solid fa-book"></i> Llevar Ensayos a Bitácora <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
@@ -827,7 +834,7 @@
                                         <th>Medio (Sustrato)</th>
                                         <th>Extracción (Solvente)</th>
                                         <th>Cromatografía (R<sub>f</sub>)</th>
-                                        <th>$\lambda_{max}$ UV-Vis</th>
+                                        <th>&lambda;<sub>max</sub> UV-Vis</th>
                                         <th>Acción</th>
                                     </tr>
                                 </thead>
@@ -1145,12 +1152,12 @@
                                         El uso de solventes orgánicos permite evaluar la naturaleza química (polaridad) del pigmento mediante la **Ley de Partición de Nernst**. Los solventes de polaridad media como el **Acetato de Etilo (EtOAc)** o polares orgánicos como **Metanol (MeOH)** rompen los enlaces hidrófobos celulares y disuelven eficazmente las azafilonas, logrando rendimientos de extracción superiores al 90%. Por el contrario, solventes polares inorgánicos (Agua) o no polares (Hexano) reportan rendimientos críticos (<15%), demostrando el carácter lipofílico conjugado de las biomoléculas.
                                     </li>
                                     <li style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
-                                        <strong class="text-cyan" style="font-size: 15px;"><i class="fa-solid fa-filter"></i> 3. Cromatografía de Capa Fina (Separación e Identificación Rf):</strong><br>
-                                        La cromatografía (TLC) en placas de sílice es indispensable para verificar la pureza y separar la mezcla compleja de extracto en bandas definidas. Basado en el coeficiente de retención **$R_f$**, permite diferenciar la **Crisogina ($R_f \approx 0.55$)** de la **Purpurogenona ($R_f \approx 0.42$)**. Moléculas con más grupos hidroxilo o carbonilo forman puentes de hidrógeno más estables con el gel de sílice (fase estacionaria polar) eluyendo con menor rapidez y mostrando un $R_f$ inferior en sistemas de elución no polares (Hexano:EtOAc).
+                                        <strong class="text-cyan" style="font-size: 15px;"><i class="fa-solid fa-filter"></i> 3. Cromatografía de Capa Fina (Separación e Identificación R<sub>f</sub>):</strong><br>
+                                        La cromatografía (TLC) en placas de sílice es indispensable para verificar la pureza y separar la mezcla compleja de extracto en bandas definidas. Basado en el coeficiente de retención **R<sub>f</sub>**, permite diferenciar la **Crisogina (R<sub>f</sub> &asymp; 0.55)** de la **Purpurogenona (R<sub>f</sub> &asymp; 0.42)**. Moléculas con más grupos hidroxilo o carbonilo forman puentes de hidrógeno más estables con el gel de sílice (fase estacionaria polar) eluyendo con menor rapidez y mostrando un R<sub>f</sub> inferior en sistemas de elución no polares (Hexano:EtOAc).
                                     </li>
                                     <li style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
                                         <strong class="text-pink" style="font-size: 15px;"><i class="fa-solid fa-chart-line"></i> 4. Espectroscopía UV-Vis (Transición Cuántica y Estructura Conyugada):</strong><br>
-                                        La transmitancia y absorbancia en el espectrofotómetro verifican la estructura molecular y la presencia de **sistemas de dobles enlaces conjugados ($\text{C}=\text{C}$)**. Estos electrones deslocalizados absorben fotones específicos del rango visible para excitarse ($\pi \rightarrow \pi^*$). La espectroscopía determina el pico óptico de absorción máxima **($\lambda_{max}$)** del cromóforo. La Crisogina de Penicillium absorbe en luz azul espectral con un pico a **$390\text{ nm}$** (percibiéndose amarilla), mientras que las azafilonas rojas absorben en el espectro verde con un pico claro a **$505\text{ nm}$** (percibiéndose carmesí).
+                                        La transmitancia y absorbancia en el espectrofotómetro verifican la estructura molecular y la presencia de **sistemas de dobles enlaces conjugados (C=C)**. Estos electrones deslocalizados absorben fotones específicos del rango visible para excitarse (&pi; &rarr; &pi;*). La Espectroscopía determina el pico óptico de absorción máxima **(&lambda;<sub>max</sub>)** del cromóforo. La Crisogina de Penicillium absorbe en luz azul espectral con un pico a **390 nm** (percibiéndose amarilla), mientras que las azafilonas rojas absorben en el espectro verde con un pico claro a **505 nm** (percibiéndose carmesí).
                                     </li>
                                     <li style="padding-bottom: 4px;">
                                         <strong class="text-neon" style="font-size: 15px;"><i class="fa-solid fa-microscope"></i> 5. Microscopía Óptica (Control de Asepsia y Aislamiento):</strong><br>
@@ -1183,7 +1190,7 @@
                                 
                                 <div class="highlight-info-box">
                                     <h4>¿Por qué realizamos espectroscopía de absorbancia?</h4>
-                                    <p>Las azafilonas poseen extensos sistemas de enlaces conjugados alternos carbono-carbono ($\text{C}=\text{C}$). Este sistema deslocalizado de electrones $\pi$ requiere muy poca energía para excitarse, lo que provoca la absorción selectiva de fotones en el rango visible ($400 - 700\text{ nm}$). Por ejemplo, la crisogina absorbe intensamente radiación de onda azul a $\approx 390\text{ nm}$, permitiendo la transmisión de longitudes de onda mayores, por lo que el ojo humano lo percibe de color amarillo brillante.</p>
+                                    <p>Las azafilonas poseen extensos sistemas de enlaces conjugados alternos carbono-carbono (C=C). Este sistema deslocalizado de electrones &pi; requiere muy poca energía para excitarse, lo que provoca la absorción selectiva de fotones en el rango visible (400 - 700 nm). Por ejemplo, la crisogina absorbe intensamente radiación de onda azul a &asymp; 390 nm, permitiendo la transmisión de longitudes de onda mayores, por lo que el ojo humano lo percibe de color amarillo brillante.</p>
                                 </div>
                             </div>
                             <div class="theory-image-panel">
