@@ -711,11 +711,12 @@ a:hover {
     flex-direction: column;
     align-items: center;
     position: relative;
+    filter: drop-shadow(0 4px 25px rgba(6, 182, 212, 0.15));
 }
 
 .flask-container {
-    width: 160px;
-    height: 200px;
+    width: 170px;
+    height: 210px;
     position: relative;
     display: flex;
     flex-direction: column;
@@ -723,32 +724,58 @@ a:hover {
 }
 
 .flask-rim {
-    width: 45px;
-    height: 8px;
-    border: 2px solid rgba(255,255,255,0.2);
+    width: 48px;
+    height: 10px;
+    border: 2px solid rgba(255, 255, 255, 0.45);
     border-radius: 4px;
-    background: transparent;
+    background: linear-gradient(90deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3) 50%, rgba(255,255,255,0.1));
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
 }
 
 .flask-neck {
-    width: 25px;
-    height: 45px;
-    border-left: 2px solid rgba(255,255,255,0.2);
-    border-right: 2px solid rgba(255,255,255,0.2);
-    background: transparent;
+    width: 28px;
+    height: 50px;
+    border-left: 2.5px solid rgba(255, 255, 255, 0.35);
+    border-right: 2.5px solid rgba(255, 255, 255, 0.35);
+    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.03));
 }
 
 .flask-body {
-    width: 160px;
-    height: 140px;
-    border-left: 2px solid rgba(255,255,255,0.2);
-    border-right: 2px solid rgba(255,255,255,0.2);
-    border-radius: 0 0 20px 20px;
-    background: transparent;
+    width: 170px;
+    height: 150px;
+    border-left: 2.5px solid rgba(255, 255, 255, 0.35);
+    border-right: 2.5px solid rgba(255, 255, 255, 0.35);
+    border-radius: 0 0 24px 24px;
+    background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.05), rgba(255,255,255,0.01) 75%);
     clip-path: polygon(42% 0, 58% 0, 100% 100%, 0 100%);
     position: absolute;
     bottom: 0;
     overflow: hidden;
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+.flask-graduations {
+    position: absolute;
+    left: 22px;
+    top: 30px;
+    bottom: 12px;
+    width: 50px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.35;
+}
+
+.flask-grad {
+    position: absolute;
+    left: 0;
+    font-size: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    color: rgba(255, 255, 255, 0.75);
+    white-space: nowrap;
+    text-shadow: 0 0 2px #000;
 }
 
 .flask-liquid {
@@ -758,17 +785,33 @@ a:hover {
     position: absolute;
     bottom: 0;
     left: 0;
-    transition: height 2.5s ease, background 2.5s ease;
+    transition: height 2.5s cubic-bezier(0.4, 0, 0.2, 1), background 2.5s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
+    box-shadow: inset 0 12px 15px -10px rgba(255, 255, 255, 0.45);
+}
+
+/* Swirling liquid wave effect */
+.flask-liquid::after {
+    content: "";
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    background: rgba(255, 255, 255, 0.08);
+    top: -248px;
+    left: -45px;
+    border-radius: 42%;
+    animation: waveRotate 7s infinite linear;
+    pointer-events: none;
 }
 
 .flask-base {
-    width: 160px;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 0 0 8px 8px;
+    width: 170px;
+    height: 6px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.25), rgba(255,255,255,0.55) 50%, rgba(255,255,255,0.25));
+    border-radius: 0 0 12px 12px;
     position: absolute;
-    bottom: -2px;
+    bottom: -3px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.6);
 }
 
 /* Floating spores pellets in liquid broth SDB */
@@ -782,7 +825,18 @@ a:hover {
     position: absolute;
     border-radius: 50%;
     opacity: 0.85;
-    animation: floatPellet 3s infinite ease-in-out;
+    box-shadow: inset 0 0 5px rgba(255,255,255,0.6), 0 0 12px currentColor;
+    filter: drop-shadow(0 0 5px currentColor);
+    animation: floatPellet 4.5s infinite ease-in-out;
+}
+
+.flask-bubble {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 50%;
+    pointer-events: none;
+    box-shadow: inset 0 0 1px #fff;
+    animation: floatBubble 2.5s infinite linear;
 }
 
 /* ----------------------------------------------------
@@ -2176,9 +2230,21 @@ canvas#canvas-curva-crecimiento {
 }
 
 @keyframes floatPellet {
-    0% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-8px) rotate(180deg); }
-    100% { transform: translateY(0) rotate(360deg); }
+    0% { transform: translateY(0) rotate(0deg) scale(1); }
+    50% { transform: translateY(-12px) rotate(180deg) scale(1.06); }
+    100% { transform: translateY(0) rotate(360deg) scale(1); }
+}
+
+@keyframes waveRotate {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes floatBubble {
+    0% { transform: translateY(110%) translateX(0); opacity: 0; }
+    10% { opacity: 0.6; }
+    90% { opacity: 0.6; }
+    100% { transform: translateY(-120%) translateX(var(--drift)); opacity: 0; }
 }
 
 @keyframes vortexShake {
