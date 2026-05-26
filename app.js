@@ -3,7 +3,19 @@
  * Author: Antigravity AI
  * Year: 2026
  */
+document.addEventListener('DOMContentLoaded', () => {
+    // Aquí adentro debes llamar a la función que lee el localStorage
+    cargarHistorialBitacora(); 
+});
 
+function cargarHistorialBitacora() {
+    const datosGuardados = localStorage.getItem('historial_ensayos'); // Cambia por tu clave real
+    if (datosGuardados) {
+        const ensayos = JSON.parse(datosGuardados);
+        // Aquí va tu lógica para pintar las filas en la tabla...
+        console.log("Datos cargados con éxito en el dispositivo:", ensayos);
+    }
+}
 document.addEventListener('DOMContentLoaded', () => {
     
     // ----------------------------------------------------
