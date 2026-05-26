@@ -122,6 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Databases
         cuadernoEnsayos: [],
+        userGallery: [],
+        userContam: [],
         
         // Questionnaire Responses Database
         cuestionarioRespuestas: {
@@ -1707,11 +1709,16 @@ document.addEventListener('DOMContentLoaded', () => {
     microUploadInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert("⚠️ La imagen excede el límite de 2MB. Por favor sube una imagen comprimida.");
+                microUploadInput.value = '';
+                return;
+            }
             const reader = new FileReader();
             reader.onload = (event) => {
                 // Change Ocular element to display user uploaded file in slot!
                 stopMicroscopeLoop();
-                ocularViewElement.innerHTML = `<div class="user-lens-photo" style="background: url('${event.target.result}') center/cover no-repeat; width: 100%; height: 100%; filter: blur(${Math.min(Math.abs(state.focusSlider - 50)/2.5, 8)}px)"></div>`;
+                ocularViewElement.innerHTML = `<div class="user-lens-photo" style="background: url('${event.target.result}') center/cover no-repeat; width: 100%; height: 100%; filter: blur(${Math.min(Math.abs(state.microFocus - 50)/2.5, 8)}px)"></div>`;
                 
                 // Track update on slider change
                 focusSlider.oninput = (slVal) => {
@@ -1785,6 +1792,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         state.cuadernoEnsayos.push(logEntry);
+        localStorage.setItem('penicillium_logs_v2', JSON.stringify(state.cuadernoEnsayos));
         renderTableLogs();
     };
 
@@ -1819,6 +1827,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Delete action
             tr.querySelector('.btn-del-log').addEventListener('click', () => {
                 state.cuadernoEnsayos = state.cuadernoEnsayos.filter(item => item.id !== log.id);
+                localStorage.setItem('penicillium_logs_v2', JSON.stringify(state.cuadernoEnsayos));
                 renderTableLogs();
             });
 
@@ -1829,6 +1838,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnBorrarBitacora.addEventListener('click', () => {
         if (confirm("¿Estás seguro de que deseas limpiar todo el historial de corridas del laboratorio virtual?")) {
             state.cuadernoEnsayos = [];
+            localStorage.setItem('penicillium_logs_v2', JSON.stringify(state.cuadernoEnsayos));
             renderTableLogs();
         }
     });
@@ -2007,6 +2017,11 @@ document.addEventListener('DOMContentLoaded', () => {
     imageUploadInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert("⚠️ La imagen excede el límite de 2MB. Por favor sube una imagen comprimida.");
+                imageUploadInput.value = '';
+                return;
+            }
             const reader = new FileReader();
             reader.onload = (event) => {
                 addNewPolaroidToGallery(event.target.result, "Ensayo del Estudiante", "Evidencia física cargada por el estudiante del cultivo fúngico real del proyecto de aula.", "Foto de Aula");
@@ -2015,22 +2030,19 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const addNewPolaroidToGallery = (imageSrc, title, desc, tag) => {
-        const now = new Date();
-        const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
-        
+    const renderGalleryPolaroidDOM = (photo) => {
         const card = document.createElement('div');
         card.className = "polaroid-card animate-scale-up";
         card.innerHTML = `
             <div class="polaroid-img-wrapper">
-                <img src="${imageSrc}" alt="User Polaroid Evidence" class="polaroid-canvas" />
-                <span class="img-badge font-mono">${tag.toUpperCase()}</span>
+                <img src="${photo.imageSrc}" alt="User Polaroid Evidence" class="polaroid-canvas" />
+                <span class="img-badge font-mono">${photo.tag.toUpperCase()}</span>
             </div>
             <div class="polaroid-caption">
-                <h4 class="editable-title" contenteditable="true">${title}</h4>
-                <p class="editable-desc" contenteditable="true">${desc}</p>
+                <h4 class="editable-title" contenteditable="true">${photo.title}</h4>
+                <p class="editable-desc" contenteditable="true">${photo.desc}</p>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span class="polaroid-date font-mono">${dateStr}</span>
+                    <span class="polaroid-date font-mono">${photo.date}</span>
                     <button class="btn-danger-outline small-btn btn-del-polaroid" style="padding: 2px 6px; font-size:10px;"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>
@@ -2039,12 +2051,49 @@ document.addEventListener('DOMContentLoaded', () => {
         // Delete action
         card.querySelector('.btn-del-polaroid').addEventListener('click', () => {
             if (confirm("¿Estás seguro de que deseas eliminar esta foto de evidencia?")) {
+                state.userGallery = state.userGallery.filter(p => p.id !== photo.id);
+                localStorage.setItem('penicillium_gallery_v2', JSON.stringify(state.userGallery));
                 card.remove();
+            }
+        });
+
+        // Edit sync on blur
+        card.querySelector('.editable-title').addEventListener('blur', (e) => {
+            const newTitle = e.target.innerText;
+            const targetPhoto = state.userGallery.find(p => p.id === photo.id);
+            if (targetPhoto) {
+                targetPhoto.title = newTitle;
+                localStorage.setItem('penicillium_gallery_v2', JSON.stringify(state.userGallery));
+            }
+        });
+
+        card.querySelector('.editable-desc').addEventListener('blur', (e) => {
+            const newDesc = e.target.innerText;
+            const targetPhoto = state.userGallery.find(p => p.id === photo.id);
+            if (targetPhoto) {
+                targetPhoto.desc = newDesc;
+                localStorage.setItem('penicillium_gallery_v2', JSON.stringify(state.userGallery));
             }
         });
 
         // Insert at beginning of grid after the pre-loaded elements
         galleryGrid.insertBefore(card, galleryGrid.firstChild);
+    };
+
+    const addNewPolaroidToGallery = (imageSrc, title, desc, tag) => {
+        const now = new Date();
+        const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+        const newPhoto = {
+            id: Date.now() + Math.random().toString(36).substr(2, 9),
+            imageSrc,
+            title,
+            desc,
+            tag,
+            date: dateStr
+        };
+        state.userGallery.push(newPhoto);
+        localStorage.setItem('penicillium_gallery_v2', JSON.stringify(state.userGallery));
+        renderGalleryPolaroidDOM(newPhoto);
     };
 
     // Contaminations uploader trigger
@@ -2053,6 +2102,11 @@ document.addEventListener('DOMContentLoaded', () => {
     contamUploadInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert("⚠️ La imagen excede el límite de 2MB. Por favor sube una imagen comprimida.");
+                contamUploadInput.value = '';
+                return;
+            }
             const reader = new FileReader();
             reader.onload = (event) => {
                 addNewContaminationPolaroid(event.target.result, "Caso de Contaminación Registrado", "Carga física del cultivo competidor bacteriano o fúngico invadiendo la biomasa.");
@@ -2061,34 +2115,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    const addNewContaminationPolaroid = (imageSrc, title, desc) => {
-        const now = new Date();
-        const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
-
+    const renderContamPolaroidDOM = (photo) => {
         const card = document.createElement('div');
         card.className = "polaroid-card animate-scale-up";
         card.innerHTML = `
             <div class="polaroid-img-wrapper">
-                <img src="${imageSrc}" alt="Contamination user evidence" class="polaroid-canvas" />
+                <img src="${photo.imageSrc}" alt="Contamination user evidence" class="polaroid-canvas" />
                 <span class="img-badge font-mono" style="background:#ef4444;">CONTAMINACIÓN</span>
             </div>
             <div class="polaroid-caption">
-                <h4 class="editable-title" contenteditable="true">${title}</h4>
-                <p class="editable-desc" contenteditable="true">${desc}</p>
+                <h4 class="editable-title" contenteditable="true">${photo.title}</h4>
+                <p class="editable-desc" contenteditable="true">${photo.desc}</p>
                 <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span class="polaroid-date font-mono">${dateStr}</span>
+                    <span class="polaroid-date font-mono">${photo.date}</span>
                     <button class="btn-danger-outline small-btn btn-del-polaroid" style="padding: 2px 6px; font-size:10px;"><i class="fa-solid fa-trash"></i></button>
                 </div>
             </div>
         `;
 
+        // Delete action
         card.querySelector('.btn-del-polaroid').addEventListener('click', () => {
             if (confirm("¿Estás seguro de que deseas eliminar esta evidencia de contaminación?")) {
+                state.userContam = state.userContam.filter(p => p.id !== photo.id);
+                localStorage.setItem('penicillium_contam_v2', JSON.stringify(state.userContam));
                 card.remove();
             }
         });
 
+        // Edit sync on blur
+        card.querySelector('.editable-title').addEventListener('blur', (e) => {
+            const newTitle = e.target.innerText;
+            const targetPhoto = state.userContam.find(p => p.id === photo.id);
+            if (targetPhoto) {
+                targetPhoto.title = newTitle;
+                localStorage.setItem('penicillium_contam_v2', JSON.stringify(state.userContam));
+            }
+        });
+
+        card.querySelector('.editable-desc').addEventListener('blur', (e) => {
+            const newDesc = e.target.innerText;
+            const targetPhoto = state.userContam.find(p => p.id === photo.id);
+            if (targetPhoto) {
+                targetPhoto.desc = newDesc;
+                localStorage.setItem('penicillium_contam_v2', JSON.stringify(state.userContam));
+            }
+        });
+
         contamGalleryGrid.insertBefore(card, contamGalleryGrid.firstChild);
+    };
+
+    const addNewContaminationPolaroid = (imageSrc, title, desc) => {
+        const now = new Date();
+        const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+        const newPhoto = {
+            id: Date.now() + Math.random().toString(36).substr(2, 9),
+            imageSrc,
+            title,
+            desc,
+            date: dateStr
+        };
+        state.userContam.push(newPhoto);
+        localStorage.setItem('penicillium_contam_v2', JSON.stringify(state.userContam));
+        renderContamPolaroidDOM(newPhoto);
     };
 
     // ----------------------------------------------------
@@ -2298,7 +2386,51 @@ document.addEventListener('DOMContentLoaded', () => {
     bindMediumToggleListeners();
     drawGrowthCurveChart();
     initQuestionnaireEvents();
+    
+    // Load persisted data
+    const loadPersistedData = () => {
+        // Cuaderno Ensayos
+        const storedLogs = localStorage.getItem('penicillium_logs_v2');
+        if (storedLogs) {
+            try {
+                state.cuadernoEnsayos = JSON.parse(storedLogs);
+            } catch (e) {
+                console.error("Error al cargar cuaderno de ensayos:", e);
+            }
+        }
+        
+        // Gallery
+        const storedGallery = localStorage.getItem('penicillium_gallery_v2');
+        if (storedGallery) {
+            try {
+                state.userGallery = JSON.parse(storedGallery);
+            } catch (e) {
+                console.error("Error al cargar galería del usuario:", e);
+            }
+        }
+        
+        // Contamination
+        const storedContam = localStorage.getItem('penicillium_contam_v2');
+        if (storedContam) {
+            try {
+                state.userContam = JSON.parse(storedContam);
+            } catch (e) {
+                console.error("Error al cargar contaminación del usuario:", e);
+            }
+        }
+    };
+
+    loadPersistedData();
     renderQuestionnaire();
     renderTableLogs();
 
+    // Render user uploaded polaroids from local storage
+    if (state.userGallery && state.userGallery.length > 0) {
+        state.userGallery.forEach(photo => renderGalleryPolaroidDOM(photo));
+    }
+    if (state.userContam && state.userContam.length > 0) {
+        state.userContam.forEach(photo => renderContamPolaroidDOM(photo));
+    }
+
 });
+
