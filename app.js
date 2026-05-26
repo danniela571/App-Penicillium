@@ -1,5 +1,5 @@
 /**
- * PENICILLIUM SP. VIRTUAL BIOTECH LAB - ENGINE VERSION 2.2
+ * PENICILLIUM SP. VIRTUAL BIOTECH LAB - ENGINE VERSION 2.3
  * Author: Antigravity AI
  * Year: 2026
  */
@@ -158,11 +158,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const flaskLiquidLayer = document.getElementById('flask-liquid-layer');
     const pelletsContainer = document.getElementById('mycelium-pellets-container');
     
-    // Step 1: Turbidity elements
-    const turbidityModuleContainer = document.getElementById('turbidity-module-container');
-    const turbidezVal = document.getElementById('turbidez-val');
-    const btnMedirTurbidez = document.getElementById('btn-medir-turbidez');
-    
     // Step 1: Stats, curve and Console
     const statCrecimiento = document.getElementById('stat-crecimiento');
     const statPigmento = document.getElementById('stat-pigmento');
@@ -172,7 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const cultivoStatusText = document.getElementById('cultivo-status-text');
     const cultivoConsole = document.getElementById('cultivo-console');
 
-    // Step 2: Extracción
+    // Step 2: Extracción & Turbidez (RELOCATED SELECTORS)
+    const turbidityCardContainer = document.getElementById('turbidity-card-container');
+    const turbidityActiveWidget = document.getElementById('turbidity-active-widget');
+    const turbidityInactiveWidget = document.getElementById('turbidity-inactive-widget');
+    const turbidezVal = document.getElementById('turbidez-val');
+    const btnMedirTurbidez = document.getElementById('btn-medir-turbidez');
+
     const extSummaryCepa = document.getElementById('ext-summary-cepa');
     const extSummaryCrecimiento = document.getElementById('ext-summary-crecimiento');
     const extSummaryBiomasa = document.getElementById('ext-summary-biomasa');
@@ -323,14 +324,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 state.agarMedio = med;
                 state.mediumType = MEDIA_PROFILES[med].type;
 
-                // Hide turbidity on solid, show when liquid
+                // Toggle visualizers
                 if (state.mediumType === 'liquid') {
                     solidVisualizer.style.display = "none";
                     liquidVisualizer.style.display = "flex";
                 } else {
                     solidVisualizer.style.display = "flex";
                     liquidVisualizer.style.display = "none";
-                    turbidityModuleContainer.style.display = "none";
                 }
                 
                 // Reset turbidity states
@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cultivoStatusDot.className = "pulse-dot yellow";
         cultivoStatusText.innerText = "Incubando...";
         
-        const phaseName = state.mediumType === 'liquid' ? 'Fase líquida en agitación' : 'Placa sólida estéril';
+        const phaseName = state.mediumType === 'liquid' ? 'Fase líquida sumergida' : 'Placa sólida estéril';
         cultivoConsole.innerText = `[INCUBADOR]: Calentando cámara a ${state.temperatura}°C. Medio inoculado con inóculo de ${SPECIES_DATA[state.selectedCepa].name} (${phaseName})...`;
 
         // Solid petriagar layer coloring
@@ -441,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
         drawGrowthCurveChart(true, k, t0, Bmax);
 
         setTimeout(() => {
-            cultivoConsole.innerText += `\n[FISIOLOGÍA]: Esporas germinando. Germinación y elongación de hifas activada.`;
+            cultivoConsole.innerText += `\n[FISIOLOGÍA]: Esporas germinando. Fase Lag superada. Hifas activando elongación celular.`;
             
             if (state.mediumType === 'solid') {
                 moldInoculum.style.width = `${maxColonySize}px`;
@@ -480,15 +480,9 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 cultivoStatusDot.className = "pulse-dot green";
                 cultivoStatusText.innerText = "Crecimiento Exitoso";
-                cultivoConsole.innerText += `\n[SISTEMA]: Ciclo de ${state.dias} días finalizado. Cosecha: ${state.biomasaCosechada} g.`;
+                cultivoConsole.innerText += `\n[SISTEMA]: Ciclo de ${state.dias} días finalizado. Cosecha lista. Presione "Cosechar Biomasa y Continuar" para analizarla en la siguiente sección.`;
                 
-                // Show turbidity analyzer if liquid medium SDB/NB
-                if (state.mediumType === 'liquid') {
-                    turbidityModuleContainer.style.display = "block";
-                    btnMedirTurbidez.disabled = false;
-                } else {
-                    btnCosechar.disabled = false;
-                }
+                btnCosechar.disabled = false;
             }
         }, 2500);
     });
@@ -512,58 +506,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Turbidity measurement logic SDB/NB
-    btnMedirTurbidez.addEventListener('click', () => {
-        btnMedirTurbidez.disabled = true;
-        cultivoStatusText.innerText = "Midiendo Turbidez...";
-        
-        setTimeout(() => {
-            let odVal = 0.0;
-            const growthRatio = state.crecimientoMicelial / 100.0;
-            
-            if (state.agarMedio === 'SDB') {
-                odVal = growthRatio * (1.35 + Math.random() * 0.25);
-            } else if (state.agarMedio === 'NB') {
-                odVal = growthRatio * (0.16 + Math.random() * 0.08);
-            }
-            
-            state.turbidezMedida = parseFloat(odVal.toFixed(3));
-            state.turbidezRealizada = true;
-            
-            turbidezVal.innerText = `${state.turbidezMedida.toFixed(3)} OD`;
-            
-            cultivoStatusDot.className = "pulse-dot green";
-            cultivoStatusText.innerText = "Turbidez Registrada";
-            
-            cultivoConsole.innerText += `\n[ESPECTROFOTÓMETRO 600nm]: Lectura óptica de densidad celular = ${state.turbidezMedida.toFixed(3)} OD. `;
-            
-            if (state.agarMedio === 'SDB') {
-                cultivoConsole.innerText += `Indica una alta concentración y dispersión de biomasa de Penicillium suspendida en forma de pellets fúngicos densos e higroscópicos.`;
-            } else {
-                cultivoConsole.innerText += `Indica crecimiento fúngico crítico o nulo debido al desajuste nutricional proteico y pH del Caldo Nutritivo estándar.`;
-            }
-            
-            btnCosechar.disabled = false;
-        }, 1200);
-    });
-
-    btnCosechar.addEventListener('click', () => {
-        extSummaryCepa.innerText = SPECIES_DATA[state.selectedCepa].name;
-        
-        let mediumInfo = MEDIA_PROFILES[state.agarMedio].name;
-        if (state.turbidezRealizada) {
-            mediumInfo += ` (Turbidez: ${state.turbidezMedida.toFixed(3)} OD)`;
-        }
-        extSummaryCrecimiento.innerText = `Biomasa: ${state.crecimientoMicelial}%, ${mediumInfo}`;
-        extSummaryBiomasa.innerText = `${state.biomasaCosechada} g`;
-        
-        tabExtraccion.classList.add('unlocked');
-        tabMicroscopia.classList.add('unlocked');
-        document.getElementById('tab-extraccion').click();
-    });
-
     // ----------------------------------------------------
-    // Growth kinetics curves solver (Petri dish canvas plot)
+    // IMPROVED: Growth kinetics curves solver with 4 colored phases and custom gradient
     // ----------------------------------------------------
     const drawGrowthCurveChart = (animate = false, k = 0.5, t0 = 3.5, Bmax = 90) => {
         const canvas = document.getElementById('canvas-curva-crecimiento');
@@ -580,16 +524,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ctx.clearRect(0,0,w,h);
 
-        const padLeft = 30;
-        const padRight = 10;
-        const padTop = 10;
-        const padBottom = 20;
+        const padLeft = 32;
+        const padRight = 12;
+        const padTop = 15;
+        const padBottom = 22;
 
         const cw = w - padLeft - padRight;
         const ch = h - padTop - padBottom;
 
-        ctx.strokeStyle = "rgba(255,255,255,0.04)";
+        // Background styling
+        ctx.fillStyle = "#090d16";
+        ctx.fillRect(padLeft, padTop, cw, ch);
+
+        // Draw grid lines
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.05)";
         ctx.lineWidth = 1;
+        ctx.setLineDash([3, 3]);
         
         for (let day = 0; day <= 10; day += 2) {
             const x = padLeft + (day / 10) * cw;
@@ -601,7 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillStyle = "#64748b";
             ctx.font = "8px 'JetBrains Mono', monospace";
             ctx.textAlign = "center";
-            ctx.fillText(`${day}d`, x, padTop + ch + 10);
+            ctx.fillText(`${day}d`, x, padTop + ch + 12);
         }
 
         const ticks = [0, 50, 100];
@@ -617,7 +567,42 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.textAlign = "right";
             ctx.fillText(`${pct}%`, padLeft - 6, y + 3);
         });
+        ctx.setLineDash([]); // Reset line dash
 
+        // Draw 4 growth phases background colors and text labels
+        const phaseZones = [
+            { xStart: 0, xEnd: 2.0, color: "rgba(100, 116, 139, 0.05)", label: "LAG" },
+            { xStart: 2.0, xEnd: 6.0, color: "rgba(16, 185, 129, 0.04)", label: "LOG / EXPONENCIAL" },
+            { xStart: 6.0, xEnd: 8.0, color: "rgba(245, 158, 11, 0.04)", label: "ESTACIONARIA" },
+            { xStart: 8.0, xEnd: 10.0, color: "rgba(239, 68, 68, 0.04)", label: "DECLINACIÓN" }
+        ];
+
+        phaseZones.forEach(zone => {
+            const x1 = padLeft + (zone.xStart / 10) * cw;
+            const x2 = padLeft + (zone.xEnd / 10) * cw;
+            
+            // Draw background fill
+            ctx.fillStyle = zone.color;
+            ctx.fillRect(x1, padTop, x2 - x1, ch);
+
+            // Draw dotted divider lines
+            ctx.strokeStyle = "rgba(148, 163, 184, 0.15)";
+            ctx.lineWidth = 0.75;
+            ctx.setLineDash([1, 4]);
+            ctx.beginPath();
+            ctx.moveTo(x2, padTop);
+            ctx.lineTo(x2, padTop + ch);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw top label
+            ctx.fillStyle = "rgba(148, 163, 184, 0.4)";
+            ctx.font = "500 7px 'Outfit', sans-serif";
+            ctx.textAlign = "center";
+            ctx.fillText(zone.label, x1 + (x2 - x1)/2, padTop - 5);
+        });
+
+        // Kinetic solver curve points
         const getBiomass = (t) => {
             if (Bmax < 5) return 0;
             let B = Bmax / (1 + Math.exp(-k * (t - t0)));
@@ -636,16 +621,40 @@ document.addEventListener('DOMContentLoaded', () => {
             points.push({ x, y, t, B });
         }
 
+        // Active strain glowing color
+        const activeStrainColor = SPECIES_DATA[state.selectedCepa]?.colorHex || "#10b981";
+
         if (animate) {
             let limit = 0;
             const animInterval = setInterval(() => {
                 if (limit < points.length) {
                     const slice = points.slice(0, limit + 1);
                     
-                    ctx.clearRect(padLeft, padTop, cw, ch);
-                    
-                    ctx.strokeStyle = "rgba(255,255,255,0.04)";
-                    for (let day = 0; day <= 10; day += 2) {
+                    // Clear only graph area to redraw grid dynamically
+                    ctx.fillStyle = "#090d16";
+                    ctx.fillRect(padLeft, padTop, cw, ch);
+
+                    // Re-fill grid regions and lines
+                    phaseZones.forEach(zone => {
+                        const x1 = padLeft + (zone.xStart / 10) * cw;
+                        const x2 = padLeft + (zone.xEnd / 10) * cw;
+                        ctx.fillStyle = zone.color;
+                        ctx.fillRect(x1, padTop, x2 - x1, ch);
+
+                        ctx.strokeStyle = "rgba(148, 163, 184, 0.1)";
+                        ctx.lineWidth = 0.5;
+                        ctx.setLineDash([1, 4]);
+                        ctx.beginPath();
+                        ctx.moveTo(x2, padTop);
+                        ctx.lineTo(x2, padTop + ch);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+                    });
+
+                    ctx.strokeStyle = "rgba(148, 163, 184, 0.05)";
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([3, 3]);
+                    for (let day = 2; day <= 8; day += 2) {
                         const x = padLeft + (day / 10) * cw;
                         ctx.beginPath();
                         ctx.moveTo(x, padTop);
@@ -659,50 +668,84 @@ document.addEventListener('DOMContentLoaded', () => {
                         ctx.lineTo(padLeft + cw, y);
                         ctx.stroke();
                     });
+                    ctx.setLineDash([]);
 
-                    ctx.strokeStyle = "rgba(16, 185, 129, 0.8)";
-                    ctx.lineWidth = 2;
-                    ctx.shadowColor = "rgba(16, 185, 129, 0.3)";
-                    ctx.shadowBlur = 4;
+                    // Draw glowing gradient fill under curve
+                    const fillGrad = ctx.createLinearGradient(padLeft, padTop, padLeft, padTop + ch);
+                    fillGrad.addColorStop(0, hexToRGBA(activeStrainColor, 0.15));
+                    fillGrad.addColorStop(1, "rgba(9, 13, 22, 0.0)");
+                    
+                    ctx.fillStyle = fillGrad;
+                    ctx.beginPath();
+                    ctx.moveTo(slice[0].x, padTop + ch);
+                    for (let i = 0; i < slice.length; i++) {
+                        ctx.lineTo(slice[i].x, slice[i].y);
+                    }
+                    ctx.lineTo(slice[slice.length - 1].x, padTop + ch);
+                    ctx.closePath();
+                    ctx.fill();
+
+                    // Draw glowing curve line
+                    ctx.strokeStyle = activeStrainColor;
+                    ctx.lineWidth = 2.5;
+                    ctx.shadowColor = activeStrainColor;
+                    ctx.shadowBlur = 6;
                     ctx.beginPath();
                     ctx.moveTo(slice[0].x, slice[0].y);
                     for (let i = 1; i < slice.length; i++) {
                         ctx.lineTo(slice[i].x, slice[i].y);
                     }
                     ctx.stroke();
-                    ctx.shadowBlur = 0;
+                    ctx.shadowBlur = 0; // reset
 
+                    // Draw pulsating cursor node
                     const head = slice[slice.length - 1];
-                    ctx.fillStyle = "#10b981";
+                    ctx.fillStyle = "#ffffff";
+                    ctx.strokeStyle = activeStrainColor;
+                    ctx.lineWidth = 2;
                     ctx.beginPath();
-                    ctx.arc(head.x, head.y, 4, 0, Math.PI * 2);
+                    ctx.arc(head.x, head.y, 4.5, 0, Math.PI * 2);
                     ctx.fill();
+                    ctx.stroke();
 
                     // Console updates during growth animation
                     let odString = "";
                     if (state.mediumType === 'liquid') {
-                        // calculate real-time OD curve display in console
                         const currentOd = (head.B / 100) * (state.agarMedio === 'SDB' ? 1.45 : 0.20);
                         odString = ` | Turbidez OD: ${currentOd.toFixed(3)}`;
                     }
-                    cultivoConsole.innerText = `[INCUBADOR]: Día virtual ${head.t.toFixed(1)} de 10. Biomasa medida: ${head.B.toFixed(1)}%${odString}.`;
+                    
+                    let phaseString = "Fase Lag (Germinación)";
+                    if (head.t > 2.0 && head.t <= 6.0) phaseString = "Fase Log (Crecimiento Exponencial)";
+                    else if (head.t > 6.0 && head.t <= 8.0) phaseString = "Fase Estacionaria (Síntesis de Pigmentos)";
+                    else if (head.t > 8.0) phaseString = "Fase de Declinación (Lisis y Autólisis)";
+
+                    cultivoConsole.innerText = `[INCUBADOR]: Día virtual ${head.t.toFixed(1)} de 10. Biomasa: ${head.B.toFixed(1)}% | ${phaseString}${odString}.`;
 
                     limit += 1;
                 } else {
                     clearInterval(animInterval);
-                    ctx.fillStyle = "rgba(255,255,255,0.25)";
-                    ctx.font = "italic 7px 'Outfit', sans-serif";
-                    ctx.fillText("Lag", padLeft + 0.1 * cw, padTop + ch - 8);
-                    ctx.fillText("Log (Exp)", padLeft + 0.35 * cw, padTop + ch / 2);
-                    ctx.fillText("Estac.", padLeft + 0.65 * cw, padTop + 14);
-                    if (state.dias > 8) {
-                        ctx.fillText("Muerte", padLeft + 0.88 * cw, padTop + ch - 12);
-                    }
                 }
             }, 25);
         } else {
-            ctx.strokeStyle = "rgba(16, 185, 129, 0.4)";
-            ctx.lineWidth = 1.5;
+            // Draw static glowing fill under curve
+            const fillGrad = ctx.createLinearGradient(padLeft, padTop, padLeft, padTop + ch);
+            fillGrad.addColorStop(0, hexToRGBA(activeStrainColor, 0.12));
+            fillGrad.addColorStop(1, "rgba(9, 13, 22, 0.0)");
+            
+            ctx.fillStyle = fillGrad;
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, padTop + ch);
+            for (let i = 0; i < points.length; i++) {
+                ctx.lineTo(points[i].x, points[i].y);
+            }
+            ctx.lineTo(points[points.length - 1].x, padTop + ch);
+            ctx.closePath();
+            ctx.fill();
+
+            // Draw curve line
+            ctx.strokeStyle = activeStrainColor;
+            ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.moveTo(points[0].x, points[0].y);
             for (let i = 1; i < points.length; i++) {
@@ -711,6 +754,84 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.stroke();
         }
     };
+
+    // ----------------------------------------------------
+    // RELOCATED & UPDATED: TURBIDITY ANALYSIS (QC STAGE - STEP 2)
+    // ----------------------------------------------------
+    btnCosechar.addEventListener('click', () => {
+        extSummaryCepa.innerText = SPECIES_DATA[state.selectedCepa].name;
+        
+        let mediumInfo = MEDIA_PROFILES[state.agarMedio].name;
+        extSummaryCrecimiento.innerText = `Biomasa: ${state.crecimientoMicelial}%, ${mediumInfo}`;
+        extSummaryBiomasa.innerText = `${state.biomasaCosechada} g`;
+        
+        tabExtraccion.classList.add('unlocked');
+        tabMicroscopia.classList.add('unlocked');
+        
+        // Setup pre-extraction QC card depending on solid or liquid sustrate
+        if (state.mediumType === 'liquid') {
+            turbidityActiveWidget.style.display = "block";
+            turbidityInactiveWidget.style.display = "none";
+            btnFiltrar.disabled = true; // Block centrifuge button until turbidimetry QC is run!
+            
+            // Clear previous readings
+            state.turbidezMedida = 0.0;
+            state.turbidezRealizada = false;
+            turbidezVal.innerText = "0.000 OD";
+            turbidezVal.style.color = "var(--neon-cyan)";
+        } else {
+            turbidityActiveWidget.style.display = "none";
+            turbidityInactiveWidget.style.display = "block";
+            btnFiltrar.disabled = false; // Enabled immediately since solid agar doesn't support turbidimetry
+            
+            state.turbidezMedida = 0.0;
+            state.turbidezRealizada = false;
+        }
+
+        // Navigate to Step 2
+        document.getElementById('tab-extraccion').click();
+    });
+
+    btnMedirTurbidez.addEventListener('click', () => {
+        btnMedirTurbidez.disabled = true;
+        extStatusText.innerText = "Midiendo Turbidez...";
+        extStatusDot.className = "pulse-dot yellow";
+        extConsole.innerText = `[ESPECTROFOTÓMETRO QC]: Inicializando haz óptico. Calibrando longitud de onda a 600 nm con blanco de control...`;
+        
+        setTimeout(() => {
+            let odVal = 0.0;
+            const growthRatio = state.crecimientoMicelial / 100.0;
+            
+            if (state.agarMedio === 'SDB') {
+                odVal = growthRatio * (1.35 + Math.random() * 0.25);
+            } else if (state.agarMedio === 'NB') {
+                odVal = growthRatio * (0.16 + Math.random() * 0.08);
+            }
+            
+            state.turbidezMedida = parseFloat(odVal.toFixed(3));
+            state.turbidezRealizada = true;
+            
+            turbidezVal.innerText = `${state.turbidezMedida.toFixed(3)} OD`;
+            
+            extStatusDot.className = "pulse-dot green";
+            extStatusText.innerText = "Calidad Verificada";
+            
+            extConsole.innerText += `\n[ANALIZADOR ESPECTRAL]: Muestra medida a OD₆₀₀ = ${state.turbidezMedida.toFixed(3)} OD. `;
+            
+            if (state.agarMedio === 'SDB') {
+                extConsole.innerText += `\n[CRITERIO CIENTÍFICO]: Alta turbidez y absorción debido al denso entramado fúngico de pellets e hifas en suspensión, coherente con la optimización de fermentación sumergida de Gunasekaran & Poorniammal (2008).`;
+            } else {
+                extConsole.innerText += `\n[CRITERIO CIENTÍFICO]: Lectura crítica de baja densidad óptica celular. Denota una notable inhibición del crecimiento bacteriano/fúngico debido a pH y limitación nutricional nitrogenada.`;
+            }
+
+            // Update extraction summary row with turbidity result
+            const medInfo = MEDIA_PROFILES[state.agarMedio].name + ` (Turbidez: ${state.turbidezMedida.toFixed(3)} OD)`;
+            extSummaryCrecimiento.innerText = `Biomasa: ${state.crecimientoMicelial}%, ${medInfo}`;
+
+            // Unlock next stage: Homogenize and Centrifuge
+            btnFiltrar.disabled = false;
+        }, 1500);
+    });
 
     // ----------------------------------------------------
     // 6. EXTRACTION PROTOCOL (STEP 2)
@@ -800,128 +921,88 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSembrarTlc.disabled = true;
         btnCorrerTlc.disabled = false;
         
-        tlcStatusDot.className = "pulse-dot yellow";
-        tlcStatusText.innerText = "Muestra sembrada";
-        tlcConsole.innerText = `[TLC]: Muestra depositada en la línea de origen mediante capilar de cuarzo. Solvente evaporado. Colocar placa en cámara de corrida...`;
+        tlcStatusText.innerText = "Surgiendo capilar...";
+        tlcConsole.innerText = `[CROMATOGRAMA]: Siembra realizada con capilar de vidrio en la línea de origen de sílice gel. Fase móvil lista. Inicia elución...`;
     });
 
     btnCorrerTlc.addEventListener('click', () => {
-        const fmRadio = document.querySelector('input[name="fase-movil"]:checked');
-        state.faseMovilTLC = fmRadio ? fmRadio.value : 'HexEtOAc';
-
         btnCorrerTlc.disabled = true;
         document.querySelectorAll('input[name="fase-movil"]').forEach(el => el.disabled = true);
+        
+        const faseMovilRadio = document.querySelector('input[name="fase-movil"]:checked');
+        state.faseMovilTLC = faseMovilRadio ? faseMovilRadio.value : 'HexEtOAc';
 
-        tlcStatusDot.className = "pulse-dot cyan";
-        tlcStatusText.innerText = "Elución en curso...";
-        tlcConsole.innerText = `[TLC]: Placa sumergida. Fase móvil eluyendo hacia arriba por capilaridad...`;
+        tlcStatusDot.className = "pulse-dot yellow";
+        tlcStatusText.innerText = "Corriendo elución...";
+        tlcConsole.innerText = `[CÁMARA TLC]: Eluyendo fase móvil (${faseMovilRadio.nextElementSibling.querySelector('.radio-title').innerText})...`;
 
-        chamberPool.style.height = "24px";
+        // Animate solvent eluting front
         solFront.style.display = "block";
-        let heightPercent = 12; 
-        const maxFrontPercent = 88; 
+        chamberPool.style.height = "12px";
         
-        const cepa = state.selectedCepa;
-        const fm = state.faseMovilTLC;
-        const targetRf = SPECIES_DATA[cepa].rf[fm];
+        // Solvent Front rises to 90% (top of silica)
+        setTimeout(() => {
+            solFront.style.bottom = "85%";
+        }, 100);
 
-        const runTlcAnimation = () => {
-            if (heightPercent < maxFrontPercent) {
-                heightPercent += 0.8;
-                solFront.style.bottom = `${heightPercent}%`;
+        // Bands Separation depending on eluting phase
+        const activeStrain = SPECIES_DATA[state.selectedCepa];
+        const targetRf = activeStrain.rf[state.faseMovilTLC];
+
+        setTimeout(() => {
+            tlcSpotInitial.style.opacity = "0.2";
+            
+            if (targetRf > 0.05 && state.rendimientoExtraccion > 15) {
+                // Rise bands to their calculated Rf relative height
+                const tlcBottomPercent = 15 + (targetRf * 70); // origin is 15%, solvent front limit is 85%
                 
-                if (targetRf > 0.05 && state.rendimientoExtraccion > 5) {
-                    const currentRfHeight = 12 + (heightPercent - 12) * targetRf;
+                let bandElement = null;
+                if (state.selectedCepa === 'chrysogenum') bandElement = bandYellow;
+                else if (state.selectedCepa === 'strain_orange') bandElement = bandOrange;
+                else if (state.selectedCepa === 'purpurogenum') bandElement = bandRed;
+
+                if (bandElement) {
+                    bandElement.style.display = "block";
+                    setTimeout(() => {
+                        bandElement.style.bottom = `${tlcBottomPercent}%`;
+                    }, 50);
                     
-                    if (cepa === 'chrysogenum') {
-                        bandYellow.style.display = "block";
-                        bandYellow.style.bottom = `${currentRfHeight}%`;
-                    } else if (cepa === 'purpurogenum') {
-                        bandRed.style.display = "block";
-                        bandRed.style.bottom = `${currentRfHeight}%`;
+                    // Bind click for Rf calculator
+                    bandElement.onclick = () => {
+                        state.selectedTlcBand = state.selectedCepa;
                         
-                        if (heightPercent > 35) {
-                            bandYellow.style.display = "block";
-                            bandYellow.style.bottom = `${12 + (heightPercent - 12) * (targetRf * 1.25)}%`;
-                        }
-                    } else if (cepa === 'strain_orange') {
-                        bandOrange.style.display = "block";
-                        bandOrange.style.bottom = `${currentRfHeight}%`;
+                        rfActiveBand.innerText = activeStrain.pigmentName;
+                        rfActiveBand.style.color = activeStrain.colorHex;
                         
-                        if (heightPercent > 40) {
-                            bandYellow.style.display = "block";
-                            bandYellow.style.bottom = `${12 + (heightPercent - 12) * (targetRf * 1.15)}%`;
-                        }
-                    }
+                        const solDist = 8.00;
+                        const bandDist = parseFloat((targetRf * solDist).toFixed(2));
+                        
+                        rfSolutoDist.innerText = `${bandDist.toFixed(2)} cm`;
+                        rfFinalVal.innerText = targetRf.toFixed(2);
+                        
+                        tlcConsole.innerText = `[ANÁLISIS]: Banda purificada seleccionada. Distancia soluto = ${bandDist}cm. Rf calculado = ${targetRf}. Proceda a la celda espectral.`;
+                        btnProcederEspectro.disabled = false;
+                    };
                 }
-                
-                requestAnimationFrame(runTlcAnimation);
             } else {
-                state.tlcCorridaRealizada = true;
-                tlcStatusDot.className = "pulse-dot green";
-                tlcStatusText.innerText = "Corrida finalizada";
-                tlcConsole.innerText += `\n[TLC]: Frente del solvente completado a 8.00 cm. Retirar placa y revelar.`;
-                
-                if (targetRf > 0.05 && state.rendimientoExtraccion > 5) {
-                    tlcSpotInitial.style.opacity = "0.2";
-                }
-
-                btnProcederEspectro.disabled = false;
-                
-                if (cepa === 'chrysogenum') {
-                    selectTlcBand(bandYellow, "Banda Amarilla (Crisogina)", targetRf);
-                } else if (cepa === 'purpurogenum') {
-                    selectTlcBand(bandRed, "Banda Roja Principal (Purpurogenona)", targetRf);
-                } else {
-                    selectTlcBand(bandOrange, "Banda Naranja Principal (Mitorubrina)", targetRf);
-                }
+                tlcConsole.innerText += `\n[ADVERTENCIA]: Fase móvil incompatible. No se observa migración celular o eluyente arrastró la muestra al frente.`;
+                btnProcederEspectro.disabled = false; // allow bypass to avoid dead ends
             }
-        };
 
-        setTimeout(runTlcAnimation, 500);
-    });
-
-    const selectTlcBand = (bandElement, name, rf) => {
-        document.querySelectorAll('.tlc-spot-band').forEach(el => el.classList.remove('selected'));
-        
-        state.selectedTlcBand = name;
-        bandElement.classList.add('selected');
-
-        const solFrontDist = 8.00; 
-        const solutoDist = solFrontDist * rf;
-
-        rfActiveBand.innerHTML = name;
-        rfSolutoDist.innerText = `${solutoDist.toFixed(2)} cm`;
-        rfFinalVal.innerText = rf.toFixed(2);
-        
-        tlcConsole.innerHTML = `[TLC CALCULADOR]: Banda seleccionada: "${name}". Distancia recorrida: ${solutoDist.toFixed(2)} cm. Factor R<sub>f</sub> = ${rf.toFixed(2)}.`;
-    };
-
-    bandYellow.addEventListener('click', () => {
-        const rf = SPECIES_DATA[state.selectedCepa].rf[state.faseMovilTLC];
-        const adjustedRf = state.selectedCepa === 'chrysogenum' ? rf : rf * 1.25;
-        selectTlcBand(bandYellow, "Banda Amarilla (Crisogina)", Math.min(adjustedRf, 0.98));
-    });
-    bandOrange.addEventListener('click', () => {
-        const rf = SPECIES_DATA[state.selectedCepa].rf[state.faseMovilTLC];
-        selectTlcBand(bandOrange, "Banda Naranja (Mitorubrinol)", rf);
-    });
-    bandRed.addEventListener('click', () => {
-        const rf = SPECIES_DATA[state.selectedCepa].rf[state.faseMovilTLC];
-        selectTlcBand(bandRed, "Banda Roja (Purpurogenona R)", rf);
+            tlcStatusDot.className = "pulse-dot green";
+            tlcStatusText.innerText = "Corrida Completada";
+            tlcConsole.innerText += `\n[CÁMARA TLC]: Frente del solvente alcanzado a 8.00 cm de altura. Seleccione las bandas de pigmento con un clic para medir su factor Rf.`;
+            
+            state.tlcCorridaRealizada = true;
+        }, 3000);
     });
 
     btnProcederEspectro.addEventListener('click', () => {
-        specSummaryPigmento.innerText = state.selectedTlcBand || "Extracto Purificado de Penicillium";
+        specSummaryPigmento.innerText = state.selectedTlcBand ? SPECIES_DATA[state.selectedTlcBand].pigmentName : "Muestra Cruda";
         specSummarySolvente.innerText = SOLVENT_EFFICACY[state.selectedSolvente].name;
         
-        let purity = 95;
-        if (state.faseMovilTLC === 'Agua') {
-            purity = 20;
-        } else if (state.faseMovilTLC === 'ChlMeOH') {
-            purity = 75;
-        }
-        specSummaryPureza.innerText = `${purity}% (Fase TLC: ${state.faseMovilTLC})`;
+        const pureza = state.selectedTlcBand ? 96 : 35;
+        specSummaryPureza.innerText = `${pureza}% (Pureza de Fracción)`;
 
         tabEspectroscopia.classList.add('unlocked');
         document.getElementById('tab-espectroscopia').click();
@@ -931,41 +1012,97 @@ document.addEventListener('DOMContentLoaded', () => {
     // 8. SPECTROSCOPY (STEP 4)
     // ----------------------------------------------------
     btnSpecBlanco.addEventListener('click', () => {
-        state.specBlankCalibrated = true;
         btnSpecBlanco.disabled = true;
-        btnSpecMuestra.disabled = false;
-        
         specStatusDot.className = "pulse-dot yellow";
-        specStatusText.innerText = "Calibrado Blanco";
-        specConsole.innerText = `[ESPECTRÓMETRO]: Blanco de disolvente calibrado. Transmitancia fijada a 100.0%. Coloca la muestra de Penicillium.`;
+        specStatusText.innerText = "Calibrando blanco...";
+        specConsole.innerText = `[ESPECTRÓMETRO]: Insertando cubeta de cuarzo vacía con solvente ${SOLVENT_EFFICACY[state.selectedSolvente].name}...`;
+
+        // Turn laser beam on
+        laserBeamIndicator.className = "laser-beam active-blue";
+        laserBeamAttenuated.className = "laser-beam attenuated active-blue";
+
+        setTimeout(() => {
+            state.specBlankCalibrated = true;
+            
+            specStatusDot.className = "pulse-dot green";
+            specStatusText.innerText = "Blanco Calibrado (0.0 Abs)";
+            specConsole.innerText = `[ESPECTRÓMETRO]: Calibración a 0.000 Absorbancia (100% Transmitancia) finalizada. Retira la celda blanco e inserta tu muestra.`;
+
+            // Reset lasers
+            laserBeamIndicator.className = "laser-beam";
+            laserBeamAttenuated.className = "laser-beam attenuated";
+
+            btnSpecMuestra.disabled = false;
+        }, 2000);
     });
 
     btnSpecMuestra.addEventListener('click', () => {
-        state.specCuvetteLoaded = true;
         btnSpecMuestra.disabled = true;
-        btnSpecScan.disabled = false;
+        specStatusDot.className = "pulse-dot yellow";
+        specStatusText.innerText = "Cargando muestra fúngica...";
 
-        cuvetteInner.style.display = "flex";
-        
-        const specColor = state.extractoColorHex === "#Ninguno" ? "transparent" : state.extractoColorHex;
-        cuvetteLiquid.style.background = hexToRGBA(specColor, 0.7);
+        // Fill Cuvette liquid with active strain extraction color
+        const pigmentHex = state.selectedTlcBand ? SPECIES_DATA[state.selectedTlcBand].colorHex : "#cbd5e1";
+        cuvetteLiquid.style.background = hexToRGBA(pigmentHex, 0.45);
+        cuvetteInner.style.transform = "translateY(0)"; // drop cuvette into slot
 
-        specStatusDot.className = "pulse-dot purple";
-        specStatusText.innerText = "Muestra Cargada";
-        specConsole.innerText = `[ESPECTRÓMETRO]: Cubeta de cuarzo de 1 cm insertada en el paso óptico. Iniciar escaneo espectral visible.`;
+        setTimeout(() => {
+            state.specCuvetteLoaded = true;
+            
+            specStatusDot.className = "pulse-dot green";
+            specStatusText.innerText = "Cubeta Cargada";
+            specConsole.innerText = `[ESPECTRÓMETRO]: Cubeta de cuarzo insertada en la celda de lectura óptica de transmitancia. Listo para escanear rango visible.`;
+            
+            btnSpecScan.disabled = false;
+        }, 1500);
     });
 
     btnSpecScan.addEventListener('click', () => {
         btnSpecScan.disabled = true;
+        specStatusDot.className = "pulse-dot yellow";
+        specStatusText.innerText = "Escaneando longitud de onda...";
+        specConsole.innerText = `[ESPECTRÓMETRO]: Activando lámpara de deuterio-tungsteno. Escaneando red de difracción visible de 300 a 700 nm...`;
+
+        // Pulse and turn on lasers depending on pigment color
+        const pigmentColor = state.selectedTlcBand ? state.selectedTlcBand : 'chrysogenum';
+        let beamClass = 'active-green'; // for red purpurogenum (absorbs green)
+        if (pigmentColor === 'chrysogenum') beamClass = 'active-blue'; // absorbs blue
+        else if (pigmentColor === 'strain_orange') beamClass = 'active-cyan'; // absorbs blue-green
+
+        laserBeamIndicator.className = `laser-beam ${beamClass}`;
         
-        specStatusDot.className = "pulse-dot cyan";
-        specStatusText.innerText = "Escaneando...";
+        // Attenuated beam is much thinner/dimmer because of absorbance
+        laserBeamAttenuated.className = `laser-beam attenuated ${beamClass} absorbed`;
 
-        laserBeamIndicator.classList.add('sweeping');
-        laserBeamAttenuated.classList.add('sweeping');
+        // Triggers Spectroscopy chart solver animation
+        drawSpectroscopyChart();
 
-        state.specScanPerformed = true;
-        drawSpectroscopyChart(true); 
+        setTimeout(() => {
+            state.specScanPerformed = true;
+            
+            // Show stats bar
+            specResultsBox.style.display = "flex";
+            const activeData = SPECIES_DATA[pigmentColor];
+            
+            specResWavelength.innerText = `${activeData.peakWavelength} nm`;
+            
+            // Absorbance value calibrated to the extraction yield
+            const calcAbs = parseFloat(((state.rendimientoExtraccion / 100) * 1.45).toFixed(3));
+            specResAbsorbance.innerText = `${calcAbs.toFixed(3)} Abs`;
+            specResFamily.innerText = activeData.family;
+
+            specStatusDot.className = "pulse-dot green";
+            specStatusText.innerText = "Escaneo Finalizado";
+            
+            specConsole.innerText = `[ESPECTRÓMETRO]: Escaneo completado. Pico óptico detectado a longitud de onda máxima (λmax) = ${activeData.peakWavelength} nm. `;
+            specConsole.innerText += `La absorbancia de ${calcAbs.toFixed(3)} Abs valida un perfil molecular compatible con la familia de las ${activeData.family}.`;
+
+            // Reset lasers
+            laserBeamIndicator.className = "laser-beam";
+            laserBeamAttenuated.className = "laser-beam attenuated";
+
+            btnProcederMicroscopio.disabled = false;
+        }, 3500);
     });
 
     btnProcederMicroscopio.addEventListener('click', () => {
@@ -973,571 +1110,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('tab-microscopia').click();
     });
 
-    // ----------------------------------------------------
-    // 9. VIRTUAL MICROSCOPE SIMULATOR (STEP 5)
-    // ----------------------------------------------------
-    zoomButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            zoomButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            state.microZoom = parseInt(btn.getAttribute('data-zoom'));
-            updateMicroscopeOcularDrawing();
-        });
-    });
-
-    microSampleSelect.addEventListener('change', (e) => {
-        state.selectedMicroSample = e.target.value;
-        
-        if (state.selectedMicroSample === 'penicillium_active') {
-            microGuideText.innerHTML = `<strong>Observación: Penicillium sp.</strong><br>Hifas vegetativas tabicadas (septadas). Se aprecian cabezas conidiógenas en forma de cepillo o escobilla (penicilo) con fiálides y cadenas de esporas circulares.`;
-        } else if (state.selectedMicroSample === 'contam_aspergillus') {
-            microGuideText.innerHTML = `<strong>Observación: Aspergillus sp. (Contaminante)</strong><br>Conidióforo cilíndrico simple no ramificado que termina en una gran vesícula globosa (cabeza conidial radial) cubierta completamente de fiálides y esporas.`;
-        } else if (state.selectedMicroSample === 'contam_rhizopus') {
-            microGuideText.innerHTML = `<strong>Observación: Rhizopus sp. (Contaminante)</strong><br>Hifas no septadas (cenocíticas) anchas. Esporangióforos marrones largos sostenidos por rizoides basales, rematados por esporangios esféricos oscuros.`;
-        } else {
-            microGuideText.innerHTML = `<strong>Observación: Contaminación Bacteriana</strong><br>Numerosos microorganismos unicelulares (bacilos cortos y cocos pequeños) dispersos y vibrando intensamente debido al choque térmico molecular (movimiento browniano).`;
-        }
-
-        updateMicroscopeOcularDrawing();
-    });
-
-    focusSlider.addEventListener('input', (e) => {
-        const val = parseInt(e.target.value);
-        state.microFocus = val;
-        focusVal.innerText = `${val}%`;
-
-        const blurAmt = Math.abs(val - 50) / 4.0; 
-        
-        ocularViewElement.style.filter = `blur(${blurAmt}px)`;
-
-        if (blurAmt > 1.3) {
-            focusAlert.style.display = "block";
-        } else {
-            focusAlert.style.display = "none";
-        }
-    });
-
-    btnProcederBitacora.addEventListener('click', () => {
-        // Automatically save simulation run to log table upon completion of loop
-        const cepaName = SPECIES_DATA[state.selectedCepa].name;
-        const medName = MEDIA_PROFILES[state.agarMedio].name + (state.turbidezRealizada ? ` (${state.turbidezMedida.toFixed(3)} OD)` : "");
-        const solventName = SOLVENT_EFFICACY[state.selectedSolvente].name;
-        const rfString = state.selectedTlcBand ? `R<sub>f</sub> = ${rfFinalVal.innerText}` : "N/A";
-        const peakString = state.specScanPerformed ? `${specResWavelength.innerText}` : "N/A";
-        
-        const timestamp = new Date().toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}) + " " + new Date().toLocaleDateString('es-ES');
-        
-        state.cuadernoEnsayos.push({
-            timestamp,
-            cepa: cepaName,
-            medio: medName,
-            solvente: solventName,
-            rf: rfString,
-            peak: peakString
-        });
-        
-        saveLogsToLocalStorage();
-        renderLogTable();
-        
-        document.querySelector('[data-target="panel-bitacora"]').click();
-    });
-
-    // Virtual Microscope render engine on Canvas 2D
-    const updateMicroscopeOcularDrawing = () => {
-        const canvas = document.getElementById('canvas-microscopio');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * window.devicePixelRatio;
-        canvas.height = rect.height * window.devicePixelRatio;
-        ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-
-        const w = rect.width;
-        const h = rect.height;
-
-        ctx.clearRect(0, 0, w, h);
-
-        const sample = state.selectedMicroSample;
-        let baseTint = "#0f172a";
-        let innerGlow = "#1e3a8a"; 
-        
-        if (sample === 'contam_bacterias') {
-            baseTint = "#111827";
-            innerGlow = "#2e1065"; 
-        }
-
-        const lensGrad = ctx.createRadialGradient(w/2, h/2, 20, w/2, h/2, 120);
-        lensGrad.addColorStop(0, innerGlow);
-        lensGrad.addColorStop(1, baseTint);
-        ctx.fillStyle = lensGrad;
-        ctx.fillRect(0, 0, w, h);
-
-        ctx.lineCap = "round";
-        
-        if (sample === 'penicillium_active') {
-            ctx.strokeStyle = "#38bdf8"; 
-            
-            if (state.microZoom === 100) {
-                ctx.lineWidth = 1.5;
-                for (let i = 0; i < 18; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(Math.random() * w, 0);
-                    ctx.bezierCurveTo(Math.random() * w, h*0.3, Math.random() * w, h*0.7, Math.random() * w, h);
-                    ctx.stroke();
-                }
-                ctx.fillStyle = "#e0f2fe";
-                for (let i = 0; i < 25; i++) {
-                    ctx.beginPath();
-                    ctx.arc(40 + Math.random() * (w - 80), 40 + Math.random() * (h - 80), 2.5, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            } else if (state.microZoom === 400) {
-                ctx.lineWidth = 3;
-                drawConidiophoreBrush(ctx, w/2 - 40, h, h - 80, 0.95);
-                drawConidiophoreBrush(ctx, w/2 + 35, h, h - 100, 0.85);
-
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = "rgba(56, 189, 248, 0.4)";
-                ctx.beginPath();
-                ctx.moveTo(0, h * 0.7); ctx.lineTo(w, h * 0.85);
-                ctx.moveTo(w * 0.2, h); ctx.lineTo(w * 0.8, 0);
-                ctx.stroke();
-            } else {
-                ctx.lineWidth = 5;
-                ctx.beginPath();
-                ctx.moveTo(w/2, h);
-                ctx.lineTo(w/2, h - 60);
-                ctx.stroke();
-
-                ctx.lineWidth = 4.5;
-                ctx.beginPath();
-                ctx.moveTo(w/2, h - 60);
-                ctx.lineTo(w/2 - 25, h - 95);
-                ctx.moveTo(w/2, h - 60);
-                ctx.lineTo(w/2 + 25, h - 95);
-                ctx.stroke();
-
-                ctx.fillStyle = "#38bdf8";
-                drawPhialideBody(ctx, w/2 - 25, h - 95, -20);
-                drawPhialideBody(ctx, w/2, h - 98, 0);
-                drawPhialideBody(ctx, w/2 + 25, h - 95, 20);
-
-                ctx.fillStyle = "#e0f2fe";
-                drawSporeChain(ctx, w/2 - 32, h - 120, 8);
-                drawSporeChain(ctx, w/2, h - 130, 9);
-                drawSporeChain(ctx, w/2 + 32, h - 120, 8);
-            }
-        } else if (sample === 'contam_aspergillus') {
-            ctx.strokeStyle = "#4ade80"; 
-            
-            if (state.microZoom === 100) {
-                ctx.lineWidth = 1.5;
-                for (let i = 0; i < 12; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(0, Math.random() * h);
-                    ctx.lineTo(w, Math.random() * h);
-                    ctx.stroke();
-                }
-                ctx.fillStyle = "#4ade80";
-                for (let i = 0; i < 8; i++) {
-                    ctx.beginPath();
-                    ctx.arc(30 + Math.random() * (w - 60), 30 + Math.random() * (h - 60), 6, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            } else if (state.microZoom === 400 || state.microZoom === 1000) {
-                const scale = state.microZoom === 1000 ? 1.8 : 1.0;
-                
-                ctx.lineWidth = 4 * scale;
-                ctx.beginPath();
-                ctx.moveTo(w/2, h);
-                ctx.lineTo(w/2, h - 80 * scale);
-                ctx.stroke();
-
-                ctx.fillStyle = "#4ade80";
-                ctx.beginPath();
-                ctx.arc(w/2, h - 80 * scale, 24 * scale, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.strokeStyle = "#22c55e";
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.arc(w/2, h - 80 * scale, 24 * scale, 0, Math.PI * 2);
-                ctx.stroke();
-
-                ctx.fillStyle = "#86efac";
-                const phialideCount = 28;
-                const radius = 24 * scale;
-                
-                for (let i = 0; i < phialideCount; i++) {
-                    const angle = (i / phialideCount) * Math.PI * 2;
-                    const px = w/2 + Math.cos(angle) * radius;
-                    const py = h - 80 * scale + Math.sin(angle) * radius;
-                    
-                    const ex = w/2 + Math.cos(angle) * (radius + 8 * scale);
-                    const ey = h - 80 * scale + Math.sin(angle) * (radius + 8 * scale);
-                    
-                    ctx.strokeStyle = "#86efac";
-                    ctx.lineWidth = 2 * scale;
-                    ctx.beginPath();
-                    ctx.moveTo(px, py);
-                    ctx.lineTo(ex, ey);
-                    ctx.stroke();
-
-                    ctx.fillStyle = "#bbf7d0";
-                    let sx = ex;
-                    let sy = ey;
-                    for (let j = 0; j < 3; j++) {
-                        ctx.beginPath();
-                        ctx.arc(sx, sy, 2 * scale, 0, Math.PI * 2);
-                        ctx.fill();
-                        sx += Math.cos(angle) * (5 * scale);
-                        sy += Math.sin(angle) * (5 * scale);
-                    }
-                }
-            }
-        } else if (sample === 'contam_rhizopus') {
-            ctx.strokeStyle = "#a1a1aa"; 
-            
-            if (state.microZoom === 100) {
-                ctx.lineWidth = 2.5; 
-                for (let i = 0; i < 7; i++) {
-                    ctx.beginPath();
-                    ctx.moveTo(Math.random() * w, 0);
-                    ctx.lineTo(Math.random() * w, h);
-                    ctx.stroke();
-                }
-                ctx.fillStyle = "#27272a"; 
-                for (let i = 0; i < 4; i++) {
-                    ctx.beginPath();
-                    ctx.arc(40 + Math.random() * (w - 80), 40 + Math.random() * (h - 80), 10, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            } else {
-                const scale = state.microZoom === 1000 ? 1.6 : 1.0;
-                
-                ctx.lineWidth = 3.5 * scale;
-                ctx.strokeStyle = "#71717a";
-                ctx.beginPath();
-                ctx.moveTo(w/2 - 25, h);
-                ctx.quadraticCurveTo(w/2 - 40, h - 15, w/2 - 50, h);
-                ctx.moveTo(w/2 - 25, h);
-                ctx.quadraticCurveTo(w/2 - 15, h - 25, w/2 - 10, h);
-                ctx.stroke();
-
-                ctx.lineWidth = 5 * scale;
-                ctx.beginPath();
-                ctx.moveTo(w/2 - 25, h);
-                ctx.lineTo(w/2 - 10, h - 90 * scale);
-                ctx.stroke();
-
-                ctx.fillStyle = "rgba(39, 39, 42, 0.95)";
-                ctx.beginPath();
-                ctx.arc(w/2 - 10, h - 90 * scale, 34 * scale, 0, Math.PI * 2);
-                ctx.fill();
-
-                ctx.strokeStyle = "#18181b";
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(w/2 - 10, h - 90 * scale, 34 * scale, 0, Math.PI * 2);
-                ctx.stroke();
-
-                ctx.fillStyle = "#3f3f46";
-                for (let i = 0; i < 20; i++) {
-                    ctx.beginPath();
-                    ctx.arc(w/2 - 40 + Math.random() * 80, h - 130 * scale + Math.random() * 60, 2.5, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-        } else {
-            ctx.fillStyle = "#c084fc"; 
-            
-            const cellCount = state.microZoom === 1000 ? 120 : 35;
-            const size = state.microZoom === 1000 ? 3.5 : 1.5;
-            
-            for (let i = 0; i < cellCount; i++) {
-                const baseSeedX = (i * 37) % w;
-                const baseSeedY = (i * 59) % h;
-                
-                const jitterX = (Math.random() - 0.5) * 3;
-                const jitterY = (Math.random() - 0.5) * 3;
-
-                ctx.beginPath();
-                if (i % 2 === 0) {
-                    ctx.ellipse(baseSeedX + jitterX, baseSeedY + jitterY, size * 2.2, size, Math.PI/4, 0, Math.PI * 2);
-                } else {
-                    ctx.arc(baseSeedX + jitterX, baseSeedY + jitterY, size, 0, Math.PI * 2);
-                }
-                ctx.fill();
-            }
-        }
-    };
-
-    const drawConidiophoreBrush = (ctx, bx, by, stemHeight, scale = 1.0) => {
-        ctx.strokeStyle = "#38bdf8";
-        ctx.lineWidth = 3 * scale;
-
-        ctx.beginPath();
-        ctx.moveTo(bx, by);
-        ctx.lineTo(bx + 10, stemHeight);
-        ctx.stroke();
-
-        ctx.lineWidth = 2.2 * scale;
-        ctx.beginPath();
-        ctx.moveTo(bx + 10, stemHeight);
-        ctx.lineTo(bx - 10, stemHeight - 25 * scale);
-        ctx.moveTo(bx + 10, stemHeight);
-        ctx.lineTo(bx + 25, stemHeight - 28 * scale);
-        ctx.moveTo(bx + 10, stemHeight);
-        ctx.lineTo(bx + 8, stemHeight - 32 * scale);
-        ctx.stroke();
-
-        const branches = [
-            {x: bx - 10, y: stemHeight - 25 * scale, angle: -15},
-            {x: bx + 8, y: stemHeight - 32 * scale, angle: 0},
-            {x: bx + 25, y: stemHeight - 28 * scale, angle: 15}
-        ];
-
-        branches.forEach(b => {
-            ctx.fillStyle = "#38bdf8";
-            ctx.beginPath();
-            ctx.arc(b.x, b.y - 6 * scale, 3 * scale, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.fillStyle = "#e0f2fe";
-            let sx = b.x;
-            let sy = b.y - 12 * scale;
-            for (let i = 0; i < 5; i++) {
-                ctx.beginPath();
-                ctx.arc(sx, sy, 2.5 * scale, 0, Math.PI * 2);
-                ctx.fill();
-                sy -= 6 * scale;
-                sx += Math.sin(b.angle) * 1.5;
-            }
-        });
-    };
-
-    const drawPhialideBody = (ctx, x, y, angleDeg) => {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate((angleDeg * Math.PI) / 180);
-        
-        ctx.beginPath();
-        ctx.moveTo(-6, 0);
-        ctx.bezierCurveTo(-8, -12, -4, -20, 0, -25);
-        ctx.bezierCurveTo(4, -20, 8, -12, 6, 0);
-        ctx.closePath();
-        ctx.fill();
-        
-        ctx.restore();
-    };
-
-    const drawSporeChain = (ctx, x, y, count) => {
-        let cy = y;
-        let cx = x;
-        for (let i = 0; i < count; i++) {
-            ctx.beginPath();
-            ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
-            ctx.fill();
-            cy -= 9;
-            cx += (Math.random() - 0.5) * 1.5;
-        }
-    };
-
-    const startMicroscopeLoop = () => {
-        stopMicroscopeLoop();
-        updateMicroscopeOcularDrawing();
-        
-        state.microLoopId = setInterval(() => {
-            if (state.selectedMicroSample === 'contam_bacterias') {
-                updateMicroscopeOcularDrawing();
-            }
-        }, 150);
-    };
-
-    const stopMicroscopeLoop = () => {
-        if (state.microLoopId) {
-            clearInterval(state.microLoopId);
-            state.microLoopId = null;
-        }
-    };
-
-    // ----------------------------------------------------
-    // 10. PRE-RENDERED PLACAS & TLC CANVASES DRAWING
-    // ----------------------------------------------------
-    const initGalleryCanvases = () => {
-        const canvasA = document.getElementById('pre-img-culture');
-        if (canvasA) {
-            const ctx = canvasA.getContext('2d');
-            const w = canvasA.width; const h = canvasA.height;
-            ctx.clearRect(0,0,w,h);
-            ctx.fillStyle = "#0c0f13"; ctx.fillRect(0, 0, w, h);
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.12)"; ctx.lineWidth = 4;
-            ctx.beginPath(); ctx.arc(w/2, h/2, 90, 0, Math.PI * 2); ctx.stroke();
-
-            ctx.fillStyle = "#ca8a04"; ctx.beginPath(); ctx.arc(w/2, h/2, 86, 0, Math.PI * 2); ctx.fill();
-
-            const haloGrad = ctx.createRadialGradient(w/2, h/2, 5, w/2, h/2, 80);
-            haloGrad.addColorStop(0, "rgba(239, 68, 68, 0.6)");
-            haloGrad.addColorStop(0.5, "rgba(249, 115, 22, 0.4)");
-            haloGrad.addColorStop(1, "rgba(202, 138, 4, 0)");
-            ctx.fillStyle = haloGrad; ctx.beginPath(); ctx.arc(w/2, h/2, 80, 0, Math.PI * 2); ctx.fill();
-
-            const colonyGrad = ctx.createRadialGradient(w/2, h/2, 2, w/2, h/2, 45);
-            colonyGrad.addColorStop(0, "#f8fafc");
-            colonyGrad.addColorStop(0.3, "#cbd5e1");
-            colonyGrad.addColorStop(0.7, "#1e3a8a");
-            colonyGrad.addColorStop(1, "#172554");
-            ctx.fillStyle = colonyGrad; ctx.beginPath(); ctx.arc(w/2, h/2, 45, 0, Math.PI * 2); ctx.fill();
-        }
-
-        const canvasB = document.getElementById('pre-img-microscope');
-        if (canvasB) {
-            const ctx = canvasB.getContext('2d');
-            const w = canvasB.width; const h = canvasB.height;
-            ctx.clearRect(0,0,w,h);
-            ctx.fillStyle = "#0f172a"; ctx.fillRect(0, 0, w, h);
-            const lightGrad = ctx.createRadialGradient(w/2, h/2, 20, w/2, h/2, 120);
-            lightGrad.addColorStop(0, "#1e3a8a"); lightGrad.addColorStop(1, "#020617");
-            ctx.fillStyle = lightGrad; ctx.fillRect(0,0,w,h);
-
-            ctx.strokeStyle = "#38bdf8"; ctx.lineWidth = 3; ctx.lineCap = "round";
-            ctx.beginPath(); ctx.moveTo(w/2 - 20, h); ctx.lineTo(w/2 - 10, h - 80); ctx.stroke();
-
-            ctx.beginPath();
-            ctx.moveTo(w/2 - 10, h - 80); ctx.lineTo(w/2 - 30, h - 110);
-            ctx.moveTo(w/2 - 10, h - 80); ctx.lineTo(w/2 + 10, h - 115);
-            ctx.moveTo(w/2 - 10, h - 80); ctx.lineTo(w/2 - 5, h - 120);
-            ctx.stroke();
-
-            ctx.lineWidth = 2;
-            const phialides = [
-                {x1: w/2 - 30, y1: h - 110, x2: w/2 - 40, y2: h - 130},
-                {x1: w/2 - 30, y1: h - 110, x2: w/2 - 28, y2: h - 132},
-                {x1: w/2 - 5, y1: h - 120, x2: w/2 - 10, y2: h - 145},
-                {x1: w/2 - 5, y1: h - 120, x2: w/2 + 2, y2: h - 146},
-                {x1: w/2 + 10, y1: h - 115, x2: w/2 + 5, y2: h - 138},
-                {x1: w/2 + 10, y1: h - 115, x2: w/2 + 22, y2: h - 136}
-            ];
-            phialides.forEach(p => {
-                ctx.beginPath(); ctx.moveTo(p.x1, p.y1); ctx.lineTo(p.x2, p.y2); ctx.stroke();
-                ctx.fillStyle = "#e0f2fe";
-                let cx = p.x2; let cy = p.y2;
-                for (let i = 0; i < 6; i++) {
-                    ctx.beginPath(); ctx.arc(cx, cy, 3.5, 0, Math.PI * 2); ctx.fill();
-                    cy -= 8; cx += (Math.random() - 0.5) * 2;
-                }
-            });
-        }
-
-        const canvasC = document.getElementById('pre-img-tlc-scan');
-        if (canvasC) {
-            const ctx = canvasC.getContext('2d');
-            const w = canvasC.width; const h = canvasC.height;
-            ctx.clearRect(0,0,w,h);
-            ctx.fillStyle = "#1e1b4b"; ctx.fillRect(0, 0, w, h);
-            ctx.fillStyle = "#e2e8f0"; ctx.fillRect(w/2 - 30, 20, 60, h - 40);
-            ctx.strokeStyle = "#94a3b8"; ctx.lineWidth = 1; ctx.setLineDash([2, 2]);
-            ctx.beginPath(); ctx.moveTo(w/2 - 30, h - 45); ctx.lineTo(w/2 + 30, h - 45); ctx.stroke();
-            ctx.setLineDash([]); 
-
-            ctx.strokeStyle = "#38bdf8"; ctx.beginPath(); ctx.moveTo(w/2 - 30, 40); ctx.lineTo(w/2 + 30, 40); ctx.stroke();
-
-            const redGrad = ctx.createRadialGradient(w/2, h - 75, 2, w/2, h - 75, 12);
-            redGrad.addColorStop(0, "rgba(239, 68, 68, 1.0)"); redGrad.addColorStop(1, "rgba(239, 68, 68, 0.0)");
-            ctx.fillStyle = redGrad; ctx.beginPath(); ctx.arc(w/2, h - 75, 12, 0, Math.PI * 2); ctx.fill();
-
-            const orangeGrad = ctx.createRadialGradient(w/2, h - 110, 2, w/2, h - 110, 10);
-            orangeGrad.addColorStop(0, "rgba(249, 115, 22, 1.0)"); orangeGrad.addColorStop(1, "rgba(249, 115, 22, 0.0)");
-            ctx.fillStyle = orangeGrad; ctx.beginPath(); ctx.arc(w/2, h - 110, 10, 0, Math.PI * 2); ctx.fill();
-
-            const yellowGrad = ctx.createRadialGradient(w/2, h - 145, 2, w/2, h - 145, 11);
-            yellowGrad.addColorStop(0, "rgba(234, 179, 8, 1.0)"); yellowGrad.addColorStop(1, "rgba(234, 179, 8, 0.0)");
-            ctx.fillStyle = yellowGrad; ctx.beginPath(); ctx.arc(w/2, h - 145, 11, 0, Math.PI * 2); ctx.fill();
-        }
-
-        const drawContamPreDrawing = (canvasId, drawType) => {
-            const canvas = document.getElementById(canvasId);
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const w = canvas.width; const h = canvas.height;
-            ctx.clearRect(0,0,w,h);
-
-            if (drawType === 'aspergillus') {
-                ctx.fillStyle = "#111827"; ctx.fillRect(0,0,w,h);
-                ctx.strokeStyle = "#4ade80"; ctx.lineWidth = 3;
-                ctx.beginPath(); ctx.moveTo(w/2, h); ctx.lineTo(w/2, h - 45); ctx.stroke();
-                ctx.fillStyle = "#22c55e"; ctx.beginPath(); ctx.arc(w/2, h - 45, 14, 0, Math.PI * 2); ctx.fill();
-                
-                ctx.fillStyle = "#86efac";
-                const phialides = 18;
-                for (let i = 0; i < phialides; i++) {
-                    const angle = (i / phialides) * Math.PI * 2;
-                    const px = w/2 + Math.cos(angle) * 14;
-                    const py = h - 45 + Math.sin(angle) * 14;
-                    const ex = w/2 + Math.cos(angle) * 20;
-                    const ey = h - 45 + Math.sin(angle) * 20;
-                    
-                    ctx.strokeStyle = "#86efac"; ctx.lineWidth = 1.5;
-                    ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(ex, ey); ctx.stroke();
-
-                    ctx.fillStyle = "#bbf7d0";
-                    ctx.beginPath(); ctx.arc(ex + Math.cos(angle)*4, ey + Math.sin(angle)*4, 1.5, 0, Math.PI*2); ctx.fill();
-                }
-            } else if (drawType === 'rhizopus') {
-                ctx.fillStyle = "#0c0a09"; ctx.fillRect(0,0,w,h);
-                ctx.strokeStyle = "#78716c"; ctx.lineWidth = 3;
-                ctx.beginPath(); ctx.moveTo(w/2 - 20, h); ctx.quadraticCurveTo(w/2 - 30, h-10, w/2 - 35, h); ctx.stroke();
-
-                ctx.beginPath(); ctx.moveTo(w/2 - 20, h); ctx.lineTo(w/2 - 10, h - 50); ctx.stroke();
-                
-                ctx.fillStyle = "rgba(41, 37, 36, 0.95)";
-                ctx.beginPath(); ctx.arc(w/2 - 10, h - 50, 18, 0, Math.PI * 2); ctx.fill();
-                ctx.strokeStyle = "#1c1917"; ctx.lineWidth = 1.5;
-                ctx.beginPath(); ctx.arc(w/2 - 10, h - 50, 18, 0, Math.PI * 2); ctx.stroke();
-
-                ctx.fillStyle = "#57534e";
-                for (let i = 0; i < 12; i++) {
-                    ctx.beginPath(); ctx.arc(w/2 - 30 + Math.random()*40, h - 70 + Math.random()*25, 2, 0, Math.PI*2); ctx.fill();
-                }
-            } else {
-                ctx.fillStyle = "#090514"; ctx.fillRect(0,0,w,h);
-                const colors = ["#a855f7", "#c084fc", "#d8b4fe"];
-                for (let i = 0; i < 6; i++) {
-                    ctx.fillStyle = colors[i % 3];
-                    ctx.beginPath();
-                    ctx.arc(30 + Math.random() * (w - 60), 20 + Math.random() * (h - 40), 10 + Math.random() * 15, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-                ctx.fillStyle = "#e879f9";
-                for (let i = 0; i < 20; i++) {
-                    ctx.beginPath();
-                    ctx.ellipse(20 + Math.random() * (w - 40), 20 + Math.random() * (h - 40), 3, 1, Math.PI/4, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
-        };
-
-        drawContamPreDrawing('canvas-contam-aspergillus-pre', 'aspergillus');
-        drawContamPreDrawing('canvas-contam-rhizopus-pre', 'rhizopus');
-        drawContamPreDrawing('canvas-contam-bact-pre', 'bacteriana');
-    };
-
-    const hexToRGBA = (hex, alpha) => {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-    };
-
-    // ----------------------------------------------------
-    // 11. DYNAMIC ESPECTROFOTOMETRO SCAN CHART DRAWING
-    // ----------------------------------------------------
-    const drawSpectroscopyChart = (animate = false) => {
+    // Chart Spectrophotometer plotting engine (Native 2D Canvas)
+    const drawSpectroscopyChart = () => {
         const canvas = document.getElementById('canvas-espectro');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        
+
         const rect = canvas.getBoundingClientRect();
         canvas.width = rect.width * window.devicePixelRatio;
         canvas.height = rect.height * window.devicePixelRatio;
@@ -1548,17 +1126,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
         ctx.clearRect(0,0,w,h);
 
-        const padLeft = 35;
-        const padRight = 15;
+        const padLeft = 32;
+        const padRight = 12;
         const padTop = 15;
-        const padBottom = 20;
+        const padBottom = 22;
 
         const cw = w - padLeft - padRight;
         const ch = h - padTop - padBottom;
 
-        // Background grids
+        // Background grid and labels
+        ctx.fillStyle = "#0c111d";
+        ctx.fillRect(padLeft, padTop, cw, ch);
+        
         ctx.strokeStyle = "rgba(255,255,255,0.03)";
         ctx.lineWidth = 1;
+        
         for (let wl = 300; wl <= 700; wl += 50) {
             const x = padLeft + ((wl - 300) / 400) * cw;
             ctx.beginPath();
@@ -1569,10 +1151,10 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillStyle = "#64748b";
             ctx.font = "8px 'JetBrains Mono', monospace";
             ctx.textAlign = "center";
-            ctx.fillText(`${wl}n`, x, padTop + ch + 12);
+            ctx.fillText(`${wl}nm`, x, padTop + ch + 12);
         }
 
-        const absTicks = [0.0, 0.5, 1.0, 1.5];
+        const absTicks = [0, 0.5, 1.0, 1.5];
         absTicks.forEach(val => {
             const y = padTop + ch - (val / 1.5) * ch;
             ctx.beginPath();
@@ -1583,595 +1165,1085 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.fillStyle = "#64748b";
             ctx.font = "8px 'JetBrains Mono', monospace";
             ctx.textAlign = "right";
-            ctx.fillText(val.toFixed(1), padLeft - 6, y + 3);
+            ctx.fillText(`${val.toFixed(1)}`, padLeft - 6, y + 3);
         });
 
-        if (!state.specScanPerformed) {
-            ctx.fillStyle = "rgba(255,255,255,0.15)";
-            ctx.font = "11px 'Montserrat', sans-serif";
-            ctx.textAlign = "center";
-            ctx.fillText("Listo para el escaneo espectral completo", padLeft + cw/2, padTop + ch/2);
-            return;
-        }
+        // Compute spectroscopy absorption curves using normal/gaussian dispersion curves
+        const pigmentColor = state.selectedTlcBand ? state.selectedTlcBand : 'chrysogenum';
+        const activeData = SPECIES_DATA[pigmentColor];
+        const peak = activeData.peakWavelength;
+        const secPeak = activeData.secondaryPeak;
+        const calcAbs = (state.rendimientoExtraccion / 100) * 1.35;
 
-        // Mathematical peak modeling (Lorentzian distribution)
-        const activeCepa = SPECIES_DATA[state.selectedCepa];
-        const peak = activeCepa.peakWavelength;
-        const secPeak = activeCepa.secondaryPeak;
-        
-        // Height based on yield
-        const maxAbs = (state.rendimientoExtraccion / 100) * 1.35;
-        
         const getAbsorbance = (wl) => {
-            if (maxAbs < 0.05) return 0.005;
-            
-            // Primary visible peak
-            const w1 = 45; // peak width
-            const mainLorentzian = maxAbs / (1 + Math.pow((wl - peak) / w1, 2));
-            
+            // Main Gaussian peak
+            const mainDist = Math.pow(wl - peak, 2);
+            const mainGauss = calcAbs * Math.exp(-mainDist / 2000); 
+
             // Secondary UV peak
-            const w2 = 25;
-            const secLorentzian = (maxAbs * 0.45) / (1 + Math.pow((wl - secPeak) / w2, 2));
-            
-            // Base noise floor
-            const noise = 0.015 + Math.sin(wl * 0.05) * 0.005;
-            
-            return Math.min(Math.max(mainLorentzian + secLorentzian + noise, 0), 1.5);
+            const secDist = Math.pow(wl - secPeak, 2);
+            const secGauss = 0.55 * Math.exp(-secDist / 1200);
+
+            // Baseline noise
+            const noise = 0.02 * Math.sin(wl / 10.0) + (Math.random() * 0.005);
+
+            return Math.max(mainGauss + secGauss + noise, 0.01);
         };
 
         const points = [];
-        for (let wl = 300; wl <= 700; wl += 1) {
+        for (let wl = 300; wl <= 700; wl += 2) {
             const x = padLeft + ((wl - 300) / 400) * cw;
             const abs = getAbsorbance(wl);
             const y = padTop + ch - (abs / 1.5) * ch;
             points.push({ x, y, wl, abs });
         }
 
-        if (animate) {
-            let limit = 0;
-            const animInterval = setInterval(() => {
-                if (limit < points.length) {
-                    const slice = points.slice(0, limit + 1);
-                    
-                    // Clear only graph area
-                    ctx.clearRect(padLeft, padTop, cw, ch);
-                    
-                    // Re-draw grids
-                    ctx.strokeStyle = "rgba(255,255,255,0.03)";
-                    for (let wl = 300; wl <= 700; wl += 50) {
-                        const x = padLeft + ((wl - 300) / 400) * cw;
-                        ctx.beginPath(); ctx.moveTo(x, padTop); ctx.lineTo(x, padTop + ch); ctx.stroke();
-                    }
-                    absTicks.forEach(val => {
-                        const y = padTop + ch - (val / 1.5) * ch;
-                        ctx.beginPath(); ctx.moveTo(padLeft, y); ctx.lineTo(padLeft + cw, y); ctx.stroke();
-                    });
+        // Animate UV-Vis Scan line
+        let limit = 0;
+        const animInterval = setInterval(() => {
+            if (limit < points.length) {
+                ctx.clearRect(padLeft, padTop, cw, ch);
 
-                    // Neon sweep shading
-                    const grad = ctx.createLinearGradient(padLeft, padTop, padLeft + cw, padTop);
-                    grad.addColorStop(0, "rgba(6, 182, 212, 0.08)");
-                    grad.addColorStop(0.5, "rgba(236, 72, 153, 0.08)");
-                    grad.addColorStop(1, "rgba(168, 85, 247, 0.08)");
-                    
-                    ctx.fillStyle = grad;
+                // Redraw grid
+                ctx.fillStyle = "#0c111d";
+                ctx.fillRect(padLeft, padTop, cw, ch);
+                ctx.strokeStyle = "rgba(255,255,255,0.03)";
+                for (let wl = 300; wl <= 700; wl += 50) {
+                    const x = padLeft + ((wl - 300) / 400) * cw;
                     ctx.beginPath();
-                    ctx.moveTo(slice[0].x, padTop + ch);
-                    for (let i = 0; i < slice.length; i++) {
-                        ctx.lineTo(slice[i].x, slice[i].y);
-                    }
-                    ctx.lineTo(slice[slice.length - 1].x, padTop + ch);
-                    ctx.closePath();
-                    ctx.fill();
+                    ctx.moveTo(x, padTop);
+                    ctx.lineTo(x, padTop + ch);
+                    ctx.stroke();
+                }
+                absTicks.forEach(val => {
+                    const y = padTop + ch - (val / 1.5) * ch;
+                    ctx.beginPath();
+                    ctx.moveTo(padLeft, y);
+                    ctx.lineTo(padLeft + cw, y);
+                    ctx.stroke();
+                });
 
-                    // Line sweep
-                    ctx.strokeStyle = "#ec4899";
-                    ctx.lineWidth = 2.5;
+                const slice = points.slice(0, limit + 1);
+
+                // Draw gradient under curve
+                const fillGrad = ctx.createLinearGradient(padLeft, padTop, padLeft, padTop + ch);
+                fillGrad.addColorStop(0, hexToRGBA(activeData.colorHex, 0.15));
+                fillGrad.addColorStop(1, "rgba(12, 17, 29, 0.0)");
+                ctx.fillStyle = fillGrad;
+                ctx.beginPath();
+                ctx.moveTo(slice[0].x, padTop + ch);
+                for (let i = 0; i < slice.length; i++) {
+                    ctx.lineTo(slice[i].x, slice[i].y);
+                }
+                ctx.lineTo(slice[slice.length - 1].x, padTop + ch);
+                ctx.closePath();
+                ctx.fill();
+
+                // Draw curve
+                ctx.strokeStyle = activeData.colorHex;
+                ctx.lineWidth = 2.0;
+                ctx.beginPath();
+                ctx.moveTo(slice[0].x, slice[0].y);
+                for (let i = 1; i < slice.length; i++) {
+                    ctx.lineTo(slice[i].x, slice[i].y);
+                }
+                ctx.stroke();
+
+                limit += 2;
+            } else {
+                clearInterval(animInterval);
+                
+                // Draw peak arrow label
+                const peakPt = points.find(pt => pt.wl === peak);
+                if (peakPt) {
+                    ctx.strokeStyle = "rgba(255,255,255,0.45)";
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([2, 2]);
                     ctx.beginPath();
-                    ctx.moveTo(slice[0].x, slice[0].y);
-                    for (let i = 1; i < slice.length; i++) {
-                        ctx.lineTo(slice[i].x, slice[i].y);
-                    }
+                    ctx.moveTo(peakPt.x, peakPt.y);
+                    ctx.lineTo(peakPt.x, padTop + ch);
+                    ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "8px 'Outfit', sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.fillText(`λmax = ${peak}nm`, peakPt.x, peakPt.y - 8);
+                }
+            }
+        }, 12);
+    };
+
+    // ----------------------------------------------------
+    // 9. VIRTUAL MICROSCOPE (STEP 5)
+    // ----------------------------------------------------
+    zoomButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            zoomButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            state.microZoom = parseInt(btn.getAttribute('data-zoom'));
+            
+            microGuideText.innerText = getMicroscopeGuide(state.selectedMicroSample, state.microZoom);
+            triggerMicroscopeFocusAlert();
+        });
+    });
+
+    microSampleSelect.addEventListener('change', (e) => {
+        state.selectedMicroSample = e.target.value;
+        
+        microGuideText.innerText = getMicroscopeGuide(state.selectedMicroSample, state.microZoom);
+        triggerMicroscopeFocusAlert();
+    });
+
+    focusSlider.addEventListener('input', (e) => {
+        state.microFocus = parseInt(e.target.value);
+        focusVal.innerText = state.microFocus;
+        triggerMicroscopeFocusAlert();
+    });
+
+    const triggerMicroscopeFocusAlert = () => {
+        if (state.microFocus >= 45 && state.microFocus <= 55) {
+            focusAlert.className = "alert-box success-alert";
+            focusAlert.innerHTML = `<i class="fa-solid fa-circle-check"></i> Enfoque resuelto. Se aprecian las estructuras fúngicas en alta nitidez.`;
+            btnProcederBitacora.disabled = false;
+        } else {
+            focusAlert.className = "alert-box warning-alert";
+            focusAlert.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Portaobjetos fuera de plano. Mueve el micrómetro para enfocar (Óptimo cerca de 50).`;
+        }
+    };
+
+    const getMicroscopeGuide = (sample, zoom) => {
+        const guides = {
+            penicillium_active: {
+                100: "Enfoque 100x: Se distingue la densa red de hilos entrelazados de hifas hialinas tabicadas (micelio vegetativo fúngico). La hifa septada es delgada y regular.",
+                400: "Enfoque 400x: Estructuras conidiógenas. Conidióforos ramificados característicos en forma de cepillo o escoba, con métulas, fiálides y cadenas de conidios globosos.",
+                1000: "Enfoque 1000x (Inmersión): Se aprecia el septado en la fiálide y la superficie lisa de las esporas asexuales (conidios) que contienen los pigmentos."
+            },
+            contam_aspergillus: {
+                100: "Enfoque 100x: Cabezas conidiales densas y globosas de color oscuro. Crecimiento radial invasivo que estrangula las hifas de Penicillium.",
+                400: "Enfoque 400x: Conidióforo no ramificado que termina en una gran vesícula esférica. Fiálides biseriadas que cubren toda la superficie de la vesícula.",
+                1000: "Enfoque 1000x: Estructura de vesícula y fiálides en collarín de Aspergillus, característico de contaminación por falta de asepsia celular."
+            },
+            contam_rhizopus: {
+                100: "Enfoque 100x: Hifas muy gruesas y cenocíticas (no septadas). Presencia de estructuras tipo raíz (rizoides) y esporangios gigantescos globulares.",
+                400: "Enfoque 400x: Esporangióforo largo y erecto que sostiene un esporangio esférico con columela central y miles de esporangiosporas oscuras en su interior.",
+                1000: "Enfoque 1000x: Esporangiosporas estriadas de Rhizopus sp. liberadas de la columela fúngica residual."
+            },
+            contam_bacterias: {
+                100: "Enfoque 100x: Se aprecian pequeños cúmulos puntiformes translúcidos que enturbian el fondo del cultivo líquido, alcalinizando el medio.",
+                400: "Enfoque 400x: Nula presencia de hifas. El campo está invadido por microestructuras bacterianas móviles.",
+                1000: "Enfoque 1000x: Cocos agrupados en racimos (Staphylococcus) y bacilos en cadena que compiten metabólicamente, destruyendo los pigmentos fúngicos."
+            }
+        };
+        return guides[sample][zoom];
+    };
+
+    // Microscope ocular rendering loop
+    const startMicroscopeLoop = () => {
+        stopMicroscopeLoop();
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 400;
+        canvas.className = "ocular-view-canvas";
+        ocularViewElement.innerHTML = '';
+        ocularViewElement.appendChild(canvas);
+        
+        const ctx = canvas.getContext('2d');
+        
+        let angle = 0;
+        const render = () => {
+            drawMicrospecimen(ctx, state.selectedMicroSample, state.microZoom, state.microFocus, angle);
+            angle += 0.004;
+            state.microLoopId = requestAnimationFrame(render);
+        };
+        render();
+    };
+
+    const stopMicroscopeLoop = () => {
+        if (state.microLoopId) {
+            cancelAnimationFrame(state.microLoopId);
+            state.microLoopId = null;
+        }
+    };
+
+    const drawMicrospecimen = (ctx, sample, zoom, focus, angle) => {
+        const w = 400;
+        const h = 400;
+        ctx.clearRect(0,0,w,h);
+
+        // Compute optical lens blurring coefficient
+        const blurAmt = Math.min(Math.abs(focus - 50) / 2.5, 12);
+        
+        // Base dark microscope lighting
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(0,0,w,h);
+
+        ctx.save();
+        
+        // Apply focus blur filter to canvas rendering
+        if (blurAmt > 0.1) {
+            ctx.filter = `blur(${blurAmt}px)`;
+        }
+
+        // Draw slide field of view light
+        const lightGrad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, 195);
+        lightGrad.addColorStop(0, "#e0f2fe");
+        lightGrad.addColorStop(0.65, "#bae6fd");
+        lightGrad.addColorStop(1, "#0f172a");
+        ctx.fillStyle = lightGrad;
+        ctx.beginPath();
+        ctx.arc(w/2, h/2, 190, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Translate to center for rotation simulation
+        ctx.translate(w/2, h/2);
+        ctx.rotate(angle);
+
+        // Render structures depending on magnification and strain
+        ctx.strokeStyle = "rgba(14, 165, 233, 0.4)";
+        ctx.lineWidth = 2.0;
+
+        if (sample === 'penicillium_active') {
+            const strainColor = SPECIES_DATA[state.selectedCepa].colorHex;
+            ctx.strokeStyle = "rgba(13, 148, 136, 0.45)"; // teal-green hifas
+
+            if (zoom === 100) {
+                // Network of septated hyphae
+                ctx.lineWidth = 1.5;
+                for (let i = -150; i < 150; i += 30) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, -170);
+                    ctx.bezierCurveTo(i + 30, -50, i - 30, 50, i + 10, 170);
                     ctx.stroke();
 
-                    // Laser pointer follow
-                    const currentHead = slice[slice.length - 1];
-                    laserBeamIndicator.style.color = getWavelengthColorHex(currentHead.wl);
-                    laserBeamAttenuated.style.color = getWavelengthColorHex(currentHead.wl);
-                    
-                    // Console updates
-                    specConsole.innerText = `[ESPECTRÓMETRO]: Escaneando longitud de onda a ${currentHead.wl} nm. Absorbancia medida = ${currentHead.abs.toFixed(3)} Abs.`;
-
-                    limit += 3;
-                } else {
-                    clearInterval(animInterval);
-                    laserBeamIndicator.classList.remove('sweeping');
-                    laserBeamAttenuated.classList.remove('sweeping');
-                    laserBeamIndicator.style.color = "transparent";
-                    laserBeamAttenuated.style.color = "transparent";
-                    
-                    // Show final analysis values
-                    specResWavelength.innerText = `${peak} nm`;
-                    specResAbsorbance.innerText = `${maxAbs.toFixed(3)} Abs`;
-                    specResFamily.innerText = activeCepa.family;
-                    specResultsBox.style.display = "grid";
-
-                    specStatusDot.className = "pulse-dot green";
-                    specStatusText.innerText = "Escaneo completado";
-                    specConsole.innerText += `\n[SISTEMA]: Escaneo de espectro finalizado con pico de absorbancia principal $\\lambda_{max}$ en ${peak} nm.`;
-                    
-                    if (state.faseMovilTLC === 'Agua') {
-                        specConsole.innerText += `\n[CUIDADO]: Se observa una señal de absorbancia sumamente plana o baja debido a la nula siembra/elución de la fase hidrófoba en agua pura TLC.`;
+                    // Septations
+                    ctx.fillStyle = "rgba(255,255,255,0.4)";
+                    for (let y = -140; y < 140; y += 40) {
+                        ctx.beginPath();
+                        ctx.arc(i + 3, y, 1.5, 0, Math.PI * 2);
+                        ctx.fill();
                     }
-                    
-                    btnProcederMicroscopio.disabled = false;
                 }
-            }, 15);
-        } else {
-            // Draw immediately (non-animated fallback)
-            ctx.strokeStyle = "rgba(236, 72, 153, 0.4)";
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-            for (let i = 1; i < points.length; i++) {
-                ctx.lineTo(points[i].x, points[i].y);
+            } else if (zoom === 400) {
+                // Brush Conidiophores
+                drawBrushConidiophore(ctx, -60, -30, 0.8, strainColor);
+                drawBrushConidiophore(ctx, 40, 60, 0.9, strainColor);
+                drawBrushConidiophore(ctx, -10, 110, 0.6, strainColor);
+            } else if (zoom === 1000) {
+                // Single huge brush zoom with spores septations details
+                drawBrushConidiophore(ctx, 0, 50, 2.2, strainColor);
             }
-            ctx.stroke();
+        } else if (sample === 'contam_aspergillus') {
+            ctx.strokeStyle = "rgba(101, 163, 13, 0.45)"; // greenish Aspergillus
+
+            if (zoom === 100) {
+                // Dense round heads
+                for (let i = 0; i < 6; i++) {
+                    const x = Math.sin(i * 1.0) * 110;
+                    const y = Math.cos(i * 1.0) * 110;
+                    ctx.fillStyle = "rgba(101, 163, 13, 0.2)";
+                    ctx.beginPath();
+                    ctx.arc(x, y, 22, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                }
+            } else if (zoom === 400 || zoom === 1000) {
+                const scale = zoom === 400 ? 1.0 : 2.4;
+                ctx.translate(0, 30);
+                
+                // Conidiophore stem
+                ctx.lineWidth = 5 * scale;
+                ctx.beginPath();
+                ctx.moveTo(0, 180);
+                ctx.lineTo(0, -20);
+                ctx.stroke();
+
+                // Giant vesicle
+                ctx.fillStyle = "rgba(77, 124, 15, 0.85)";
+                ctx.beginPath();
+                ctx.arc(0, -20, 28 * scale, 0, Math.PI*2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Biseriate phialides and spores radial array
+                ctx.strokeStyle = "rgba(132, 204, 22, 0.6)";
+                ctx.lineWidth = 2 * scale;
+                for (let a = 0; a < Math.PI * 2; a += 0.18) {
+                    const vx = Math.cos(a) * (28 * scale);
+                    const vy = Math.sin(a) * (28 * scale);
+                    const ex = Math.cos(a) * (52 * scale);
+                    const ey = Math.sin(a) * (52 * scale);
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(vx, -20 + vy);
+                    ctx.lineTo(ex, -20 + ey);
+                    ctx.stroke();
+
+                    // Chains of spores
+                    ctx.fillStyle = "rgba(217, 249, 157, 0.8)";
+                    ctx.beginPath();
+                    ctx.arc(ex, -20 + ey, 3.5 * scale, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
+        } else if (sample === 'contam_rhizopus') {
+            ctx.strokeStyle = "rgba(71, 85, 105, 0.4)";
+            
+            if (zoom === 100) {
+                // Densely packed thick cenocytic hyphae
+                ctx.lineWidth = 3.5;
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(-180, -100 + i * 50);
+                    ctx.lineTo(180, 100 - i * 30);
+                    ctx.stroke();
+                }
+                
+                // Giant globose sporangia
+                ctx.fillStyle = "rgba(30, 41, 59, 0.75)";
+                ctx.beginPath();
+                ctx.arc(-30, -40, 32, 0, Math.PI * 2);
+                ctx.arc(80, 60, 28, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            } else if (zoom === 400 || zoom === 1000) {
+                const scale = zoom === 400 ? 1.0 : 2.5;
+                ctx.translate(0, 40);
+                
+                // Sporangiophore
+                ctx.lineWidth = 6 * scale;
+                ctx.beginPath();
+                ctx.moveTo(0, 180);
+                ctx.lineTo(0, -30);
+                ctx.stroke();
+
+                // Sporangium wall (transluncid)
+                ctx.fillStyle = "rgba(100, 116, 139, 0.25)";
+                ctx.beginPath();
+                ctx.arc(0, -30, 42 * scale, 0, Math.PI*2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Columella inside
+                ctx.fillStyle = "rgba(51, 65, 85, 0.9)";
+                ctx.beginPath();
+                ctx.arc(0, -30, 22 * scale, 0, Math.PI*2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Thousands of micro spores
+                ctx.fillStyle = "rgba(15, 23, 42, 0.85)";
+                for (let s = 0; s < 45; s++) {
+                    const ra = Math.random() * Math.PI * 2;
+                    const rd = (24 + Math.random() * 16) * scale;
+                    ctx.beginPath();
+                    ctx.arc(Math.cos(ra) * rd, -30 + Math.sin(ra) * rd, 2.5 * scale, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
+        } else if (sample === 'contam_bacterias') {
+            // Background is blurry cocci/bacilli noise
+            ctx.fillStyle = "rgba(224, 242, 254, 0.3)";
+            
+            const count = zoom === 100 ? 60 : (zoom === 400 ? 150 : 350);
+            const size = zoom === 100 ? 2 : (zoom === 400 ? 4 : 8);
+
+            for (let b = 0; b < count; b++) {
+                const bx = -160 + (b * 17) % 320;
+                const by = -160 + (b * 29) % 320;
+                
+                ctx.fillStyle = b % 2 === 0 ? "rgba(225, 29, 72, 0.45)" : "rgba(37, 99, 235, 0.45)";
+                
+                if (b % 3 === 0) {
+                    // Bacilli (rod)
+                    ctx.save();
+                    ctx.translate(bx, by);
+                    ctx.rotate(bx * 0.1);
+                    ctx.fillRect(-size, -size/2.5, size*2, size/1.2);
+                    ctx.restore();
+                } else {
+                    // Cocci (round sphere)
+                    ctx.beginPath();
+                    ctx.arc(bx, by, size/1.2, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            }
         }
+
+        ctx.restore();
     };
 
-    const getWavelengthColorHex = (wl) => {
-        if (wl >= 380 && wl < 440) return "#8b5cf6"; // Violet
-        if (wl >= 440 && wl < 485) return "#3b82f6"; // Blue
-        if (wl >= 485 && wl < 500) return "#06b6d4"; // Cyan
-        if (wl >= 500 && wl < 565) return "#10b981"; // Green
-        if (wl >= 565 && wl < 590) return "#eab308"; // Yellow
-        if (wl >= 590 && wl < 625) return "#f97316"; // Orange
-        if (wl >= 625 && wl <= 700) return "#ef4444"; // Red
-        return "#ec4899"; // default laser pink
-    };
+    const drawBrushConidiophore = (ctx, cx, cy, scale, color) => {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.scale(scale, scale);
 
-    // ----------------------------------------------------
-    // 12. GENERAL LOCAL STORAGE BINDINGS & QUESTIONNAIRE CRUD
-    // ----------------------------------------------------
-    const saveLogsToLocalStorage = () => {
-        localStorage.setItem('penicillium_lab_logs_v2', JSON.stringify(state.cuadernoEnsayos));
-    };
+        // 1. Conidiophore main stalk
+        ctx.strokeStyle = "rgba(13, 148, 136, 0.8)";
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(0, 120);
+        ctx.lineTo(0, 0);
+        ctx.stroke();
 
-    const loadLogsFromLocalStorage = () => {
-        const data = localStorage.getItem('penicillium_lab_logs_v2');
-        if (data) {
-            state.cuadernoEnsayos = JSON.parse(data);
-        }
-    };
+        // Septums on stalk
+        ctx.fillStyle = "rgba(255,255,255,0.3)";
+        ctx.beginPath();
+        ctx.arc(0, 80, 1.5, 0, Math.PI * 2);
+        ctx.arc(0, 40, 1.5, 0, Math.PI * 2);
+        ctx.fill();
 
-    const renderLogTable = () => {
-        if (state.cuadernoEnsayos.length === 0) {
-            tableLogsBody.innerHTML = `
-                <tr class="empty-row-placeholder">
-                    <td colspan="7"><i class="fa-solid fa-folder-open"></i> Aún no has registrado ensayos. Completa una simulación y haz clic en "Registrar Resultados".</td>
-                </tr>
-            `;
-            return;
-        }
-
-        tableLogsBody.innerHTML = '';
-        state.cuadernoEnsayos.forEach((log, index) => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="font-mono">${log.timestamp}</td>
-                <td><strong>${log.cepa}</strong></td>
-                <td><span class="badge-scientific" style="padding:2px 8px; font-size:10px;">${log.medio}</span></td>
-                <td>${log.solvente}</td>
-                <td class="font-mono text-cyan">${log.rf}</td>
-                <td class="font-mono text-pink">${log.peak}</td>
-                <td>
-                    <button class="btn-row-action btn-descargar" data-index="${index}">
-                        <i class="fa-solid fa-file-arrow-down"></i> Informe
-                    </button>
-                </td>
-            `;
-            tableLogsBody.appendChild(tr);
-        });
-
-        document.querySelectorAll('.btn-descargar').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const idx = btn.getAttribute('data-index');
-                downloadTextReport(state.cuadernoEnsayos[idx]);
-            });
-        });
-    };
-
-    const downloadTextReport = (log) => {
-        const text = `==========================================================
-REPORTE VIRTUAL DE ENSAYO CIENTÍFICO - PENICILLIUM SP. LAB
-==========================================================
-Fecha del Ensayo      : ${log.timestamp}
-Cepa de Estudio       : ${log.cepa}
-Medio de Cultivo      : ${log.medio}
-Solvente de Extracción : ${log.solvente}
-Cromatografía R_f     : ${log.rf.replace(/<sub>/g, '').replace(/<\/sub>/g, '')}
-Pico Espectral (UV-Vis): ${log.peak}
-
-Fundamento y Conclusión:
-La separación cromatográfica en placa de sílice reveló la elución
-con factor de retención (R_f) característico. El escaneo óptico
-espectroscópico UV-Vis verificó la absorción cuántica molecular con
-máxima absorbancia en ${log.peak}, correspondiente a los enlaces conjugados
-carbono-carbono policétidos producidos biológicamente.
-
-Simulador de Fisiología Fúngica Virtual. Criterio Científico Basado
-en Sardaryan et al. (2004) & Mapari et al. (2009).
-==========================================================`;
+        // 2. Metulae (branches)
+        ctx.strokeStyle = "rgba(20, 184, 166, 0.85)";
+        ctx.lineWidth = 3;
         
-        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = `Reporte_${log.cepa.replace(/\s+/g, '_')}_Rf_${log.rf.replace(/<[^>]*>/g, '')}.txt`;
-        link.click();
+        ctx.beginPath();
+        ctx.moveTo(0, 0); ctx.lineTo(-12, -22);
+        ctx.moveTo(0, 0); ctx.lineTo(0, -28);
+        ctx.moveTo(0, 0); ctx.lineTo(12, -22);
+        ctx.stroke();
+
+        // 3. Phialides (flasks holding spores)
+        ctx.strokeStyle = "rgba(45, 212, 191, 0.9)";
+        ctx.lineWidth = 2;
+        
+        // Left branch phialides
+        ctx.beginPath();
+        ctx.moveTo(-12, -22); ctx.lineTo(-22, -42);
+        ctx.moveTo(-12, -22); ctx.lineTo(-10, -45);
+        // Center branch phialides
+        ctx.moveTo(0, -28); ctx.lineTo(-4, -50);
+        ctx.moveTo(0, -28); ctx.lineTo(4, -50);
+        // Right branch phialides
+        ctx.moveTo(12, -22); ctx.lineTo(10, -45);
+        ctx.moveTo(12, -22); ctx.lineTo(22, -42);
+        ctx.stroke();
+
+        // 4. Chains of globose spores (conidios)
+        ctx.fillStyle = color;
+        const phialidesEnds = [
+            { x: -22, y: -42 }, { x: -10, y: -45 },
+            { x: -4, y: -50 }, { x: 4, y: -50 },
+            { x: 10, y: -45 }, { x: 22, y: -42 }
+        ];
+
+        phialidesEnds.forEach(p => {
+            // Draw a chain of 4-5 tiny spores rising from each phialide
+            let sx = p.x;
+            let sy = p.y;
+            for (let s = 0; s < 5; s++) {
+                sy -= 7;
+                sx += (Math.sin(s * 1.5) * 1.2);
+                ctx.beginPath();
+                ctx.arc(sx, sy, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+
+        ctx.restore();
     };
 
-    btnBorrarBitacora.addEventListener('click', () => {
-        if (confirm("⚠️ ¿Estás seguro de que deseas eliminar todo el historial de la bitácora de ensayos?")) {
-            state.cuadernoEnsayos = [];
-            saveLogsToLocalStorage();
-            renderLogTable();
+    // User microscope uploader trigger
+    microUploadZone.addEventListener('click', () => microUploadInput.click());
+    
+    microUploadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                // Change Ocular element to display user uploaded file in slot!
+                stopMicroscopeLoop();
+                ocularViewElement.innerHTML = `<div class="user-lens-photo" style="background: url('${event.target.result}') center/cover no-repeat; width: 100%; height: 100%; filter: blur(${Math.min(Math.abs(state.focusSlider - 50)/2.5, 8)}px)"></div>`;
+                
+                // Track update on slider change
+                focusSlider.oninput = (slVal) => {
+                    const focusVal = parseInt(slVal.target.value);
+                    const b = Math.min(Math.abs(focusVal - 50)/2.5, 8);
+                    const photoDiv = ocularViewElement.querySelector('.user-lens-photo');
+                    if (photoDiv) {
+                        photoDiv.style.filter = `blur(${b}px)`;
+                    }
+                    state.microFocus = focusVal;
+                    document.getElementById('focus-val').innerText = focusVal;
+                    triggerMicroscopeFocusAlert();
+                };
+                
+                triggerMicroscopeFocusAlert();
+                
+                // Auto register evidence into general gallery
+                const polaroidTitle = `Foto Real: ${microSampleSelect.options[microSampleSelect.selectedIndex].text}`;
+                const polaroidDesc = `Evidencia física agregada por el estudiante usando la carga del microscopio real. Enfoque: ${state.microZoom}x.`;
+                addNewPolaroidToGallery(event.target.result, polaroidTitle, polaroidDesc, 'Evidencia Ocular');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    btnProcederBitacora.addEventListener('click', () => {
+        const targetId = 'panel-bitacora';
+        stepTabs.forEach(t => t.classList.remove('active'));
+        panelSections.forEach(panel => panel.classList.remove('active'));
+        
+        const tab = document.querySelector(`.step-tab[data-target="${targetId}"]`);
+        if (tab) tab.classList.add('active');
+        
+        const targetPanel = document.getElementById(targetId);
+        if (targetPanel) {
+            targetPanel.classList.add('active');
+            initGalleryCanvases();
+            renderQuestionnaire();
         }
     });
 
     // ----------------------------------------------------
-    // QUESTIONNAIRE PERSISTENCE AND RENDERING (CRUD)
+    // 10. SIMULATOR LOGS DATABASE (STEP 6.1)
     // ----------------------------------------------------
-    const saveQuestionnaireAnswers = () => {
-        localStorage.setItem('penicillium_answers_v2', JSON.stringify(state.cuestionarioRespuestas));
+    // Adds a run row to the Bitácora database table
+    const registerRunLog = () => {
+        if (state.crecimientoMicelial === 0) return;
+        
+        const now = new Date();
+        const timestamp = `${now.getDate()}/${now.getMonth()+1} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+        
+        const cepaName = SPECIES_DATA[state.selectedCepa].pigmentName;
+        
+        let mediumInfo = MEDIA_PROFILES[state.agarMedio].name;
+        if (state.turbidezRealizada) {
+            mediumInfo += ` (Turbidez: ${state.turbidezMedida.toFixed(3)} OD)`;
+        }
+
+        const solvent = SOLVENT_EFFICACY[state.selectedSolvente].name;
+        const chromatographyRf = state.selectedTlcBand ? `${SPECIES_DATA[state.selectedTlcBand].pigmentName} (Rf: ${activeTlcRf().toFixed(2)})` : "No purificado";
+        const maxWavelength = state.specScanPerformed ? `${SPECIES_DATA[state.selectedCepa].peakWavelength} nm` : "No escaneado";
+
+        const logEntry = {
+            id: Date.now(),
+            time: timestamp,
+            cepa: cepaName,
+            medio: mediumInfo,
+            solvente: solvent,
+            rf: chromatographyRf,
+            wl: maxWavelength
+        };
+
+        state.cuadernoEnsayos.push(logEntry);
+        renderTableLogs();
     };
 
-    const loadQuestionnaireAnswers = () => {
-        const data = localStorage.getItem('penicillium_answers_v2');
-        if (data) {
-            state.cuestionarioRespuestas = JSON.parse(data);
+    const activeTlcRf = () => {
+        return SPECIES_DATA[state.selectedCepa].rf[state.faseMovilTLC];
+    };
+
+    const renderTableLogs = () => {
+        tableLogsBody.innerHTML = '';
+        if (state.cuadernoEnsayos.length === 0) {
+            tableLogsBody.innerHTML = `
+                <tr class="empty-row-placeholder">
+                    <td colspan="7"><i class="fa-solid fa-folder-open"></i> Aún no has registrado ensayos. Completa una simulación y haz clic en "Registrar Resultados".</td>
+                </tr>`;
+            return;
+        }
+
+        state.cuadernoEnsayos.forEach(log => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${log.time}</td>
+                <td>${log.cepa}</td>
+                <td style="font-size:11.5px;">${log.medio}</td>
+                <td>${log.solvente}</td>
+                <td>${log.rf}</td>
+                <td class="font-mono text-pink font-bold">${log.wl}</td>
+                <td>
+                    <button class="btn-danger-outline small-btn btn-del-log" data-id="${log.id}"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            `;
+            
+            // Delete action
+            tr.querySelector('.btn-del-log').addEventListener('click', () => {
+                state.cuadernoEnsayos = state.cuadernoEnsayos.filter(item => item.id !== log.id);
+                renderTableLogs();
+            });
+
+            tableLogsBody.appendChild(tr);
+        });
+    };
+
+    btnBorrarBitacora.addEventListener('click', () => {
+        if (confirm("¿Estás seguro de que deseas limpiar todo el historial de corridas del laboratorio virtual?")) {
+            state.cuadernoEnsayos = [];
+            renderTableLogs();
+        }
+    });
+
+    // Auto-register logs upon finishing Steps 4/5
+    btnProcederMicroscopio.addEventListener('click', registerRunLog);
+    btnProcederBitacora.addEventListener('click', registerRunLog);
+
+    // ----------------------------------------------------
+    // 11. LABORATORY EXPERIMENTAL EVIDENCE GALLERY (POLAROIDS)
+    // ----------------------------------------------------
+    // Draw pre-loaded mock canvas elements on the fly to avoid broken external links
+    const initGalleryCanvases = () => {
+        const c1 = document.getElementById('pre-img-culture');
+        if (c1) drawCulturePlaceholder(c1);
+
+        const c2 = document.getElementById('pre-img-microscope');
+        if (c2) drawMicroscopePlaceholder(c2);
+
+        const c3 = document.getElementById('pre-img-tlc-scan');
+        if (c3) drawTlcPlaceholder(c3);
+
+        const c4 = document.getElementById('canvas-contam-aspergillus-pre');
+        if (c4) drawAspergillusContamPlaceholder(c4);
+
+        const c5 = document.getElementById('canvas-contam-rhizopus-pre');
+        if (c5) drawRhizopusContamPlaceholder(c5);
+
+        const c6 = document.getElementById('canvas-contam-bact-pre');
+        if (c6) drawBacteriaContamPlaceholder(c6);
+    };
+
+    const drawCulturePlaceholder = (canvas) => {
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.fillStyle = "#ca8a04"; // YES Agar background
+        ctx.fillRect(0,0,w,h);
+
+        // Dish rim
+        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        ctx.arc(w/2, h/2, 90, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Giant mold colony
+        const moldGrad = ctx.createRadialGradient(w/2, h/2, 5, w/2, h/2, 60);
+        moldGrad.addColorStop(0, "#f8fafc");
+        moldGrad.addColorStop(0.3, "#a1a1aa");
+        moldGrad.addColorStop(0.8, "#115e59"); // Blue-green mycelium
+        moldGrad.addColorStop(1, "rgba(234, 179, 8, 0.0)");
+        
+        ctx.fillStyle = moldGrad;
+        ctx.beginPath();
+        ctx.arc(w/2, h/2, 80, 0, Math.PI*2);
+        ctx.fill();
+
+        // Glowing yellow exudate drops
+        ctx.fillStyle = "rgba(251, 191, 36, 0.85)";
+        for (let i = 0; i < 8; i++) {
+            const rx = w/2 - 25 + Math.random() * 50;
+            const ry = h/2 - 25 + Math.random() * 50;
+            ctx.beginPath();
+            ctx.arc(rx, ry, 3.5, 0, Math.PI*2);
+            ctx.fill();
         }
     };
 
+    const drawMicroscopePlaceholder = (canvas) => {
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.fillStyle = "#0f172a";
+        ctx.fillRect(0,0,w,h);
+
+        // Ocular light
+        const rGrad = ctx.createRadialGradient(w/2, h/2, 20, w/2, h/2, 100);
+        rGrad.addColorStop(0, "#bae6fd");
+        rGrad.addColorStop(1, "#1e293b");
+        ctx.fillStyle = rGrad;
+        ctx.beginPath();
+        ctx.arc(w/2, h/2, 98, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Draw conidiophore brush
+        drawBrushConidiophore(ctx, w/2, h/2 + 20, 1.1, "#ef4444");
+    };
+
+    const drawTlcPlaceholder = (canvas) => {
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.fillStyle = "#cbd5e1";
+        ctx.fillRect(0,0,w,h);
+
+        // Plaque background grid
+        ctx.strokeStyle = "rgba(0,0,0,0.15)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(w/2 - 40, 20); ctx.lineTo(w/2 - 40, h - 20);
+        ctx.moveTo(w/2 + 40, 20); ctx.lineTo(w/2 + 40, h - 20);
+        ctx.moveTo(w/2 - 60, h - 40); ctx.lineTo(w/2 + 60, h - 40); // origin
+        ctx.moveTo(w/2 - 60, 40); ctx.lineTo(w/2 + 60, 40); // front
+        ctx.stroke();
+
+        // Spotted bands
+        ctx.fillStyle = "rgba(239, 68, 68, 0.9)"; // purpurogenum band
+        ctx.beginPath(); ctx.arc(w/2 - 40, h - 90, 6, 0, Math.PI*2); ctx.fill();
+
+        ctx.fillStyle = "rgba(251, 191, 36, 0.9)"; // chrysogenum band
+        ctx.beginPath(); ctx.arc(w/2 + 40, h - 120, 6, 0, Math.PI*2); ctx.fill();
+    };
+
+    const drawAspergillusContamPlaceholder = (canvas) => {
+        const ctx = canvas.getContext('2d');
+        drawOcularCircleMock(ctx, canvas.width, canvas.height);
+        drawBacteriaBackgroundNoise(ctx, canvas.width, canvas.height, 12, "rgba(101, 163, 13, 0.3)");
+        ctx.translate(canvas.width/2, canvas.height/2 + 10);
+        
+        ctx.strokeStyle = "rgba(101, 163, 13, 0.7)";
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(0, 90); ctx.lineTo(0, -10); ctx.stroke();
+        
+        ctx.fillStyle = "rgba(77, 124, 15, 0.9)";
+        ctx.beginPath(); ctx.arc(0, -10, 16, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    };
+
+    const drawRhizopusContamPlaceholder = (canvas) => {
+        const ctx = canvas.getContext('2d');
+        drawOcularCircleMock(ctx, canvas.width, canvas.height);
+        
+        ctx.strokeStyle = "rgba(71, 85, 105, 0.6)";
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(canvas.width/2, canvas.height); ctx.lineTo(canvas.width/2, canvas.height/2 - 10); ctx.stroke();
+
+        ctx.fillStyle = "rgba(100, 116, 139, 0.35)";
+        ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height/2 - 10, 24, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+        ctx.beginPath(); ctx.arc(canvas.width/2, canvas.height/2 - 10, 12, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+    };
+
+    const drawBacteriaContamPlaceholder = (canvas) => {
+        const ctx = canvas.getContext('2d');
+        drawOcularCircleMock(ctx, canvas.width, canvas.height);
+        drawBacteriaBackgroundNoise(ctx, canvas.width, canvas.height, 45, "rgba(225, 29, 72, 0.5)");
+        drawBacteriaBackgroundNoise(ctx, canvas.width, canvas.height, 45, "rgba(37, 99, 235, 0.5)");
+    };
+
+    const drawOcularCircleMock = (ctx, w, h) => {
+        ctx.fillStyle = "#1e293b";
+        ctx.fillRect(0,0,w,h);
+
+        const rGrad = ctx.createRadialGradient(w/2, h/2, 20, w/2, h/2, 60);
+        rGrad.addColorStop(0, "#e0f2fe");
+        rGrad.addColorStop(1, "#0f172a");
+        ctx.fillStyle = rGrad;
+        ctx.beginPath(); ctx.arc(w/2, h/2, 58, 0, Math.PI * 2); ctx.fill();
+    };
+
+    const drawBacteriaBackgroundNoise = (ctx, w, h, count, color) => {
+        ctx.fillStyle = color;
+        for (let b = 0; b < count; b++) {
+            const bx = w/2 - 45 + Math.random() * 90;
+            const by = h/2 - 45 + Math.random() * 90;
+            ctx.beginPath();
+            ctx.arc(bx, by, 1.5, 0, Math.PI*2);
+            ctx.fill();
+        }
+    };
+
+    // User files dropping handler
+    uploadZone.addEventListener('click', () => imageUploadInput.click());
+    
+    imageUploadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                addNewPolaroidToGallery(event.target.result, "Ensayo del Estudiante", "Evidencia física cargada por el estudiante del cultivo fúngico real del proyecto de aula.", "Foto de Aula");
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    const addNewPolaroidToGallery = (imageSrc, title, desc, tag) => {
+        const now = new Date();
+        const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+        
+        const card = document.createElement('div');
+        card.className = "polaroid-card animate-scale-up";
+        card.innerHTML = `
+            <div class="polaroid-img-wrapper">
+                <img src="${imageSrc}" alt="User Polaroid Evidence" class="polaroid-canvas" />
+                <span class="img-badge font-mono">${tag.toUpperCase()}</span>
+            </div>
+            <div class="polaroid-caption">
+                <h4 class="editable-title" contenteditable="true">${title}</h4>
+                <p class="editable-desc" contenteditable="true">${desc}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="polaroid-date font-mono">${dateStr}</span>
+                    <button class="btn-danger-outline small-btn btn-del-polaroid" style="padding: 2px 6px; font-size:10px;"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+        `;
+        
+        // Delete action
+        card.querySelector('.btn-del-polaroid').addEventListener('click', () => {
+            if (confirm("¿Estás seguro de que deseas eliminar esta foto de evidencia?")) {
+                card.remove();
+            }
+        });
+
+        // Insert at beginning of grid after the pre-loaded elements
+        galleryGrid.insertBefore(card, galleryGrid.firstChild);
+    };
+
+    // Contaminations uploader trigger
+    contamUploadZone.addEventListener('click', () => contamUploadInput.click());
+    
+    contamUploadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                addNewContaminationPolaroid(event.target.result, "Caso de Contaminación Registrado", "Carga física del cultivo competidor bacteriano o fúngico invadiendo la biomasa.");
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    const addNewContaminationPolaroid = (imageSrc, title, desc) => {
+        const now = new Date();
+        const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()}`;
+
+        const card = document.createElement('div');
+        card.className = "polaroid-card animate-scale-up";
+        card.innerHTML = `
+            <div class="polaroid-img-wrapper">
+                <img src="${imageSrc}" alt="Contamination user evidence" class="polaroid-canvas" />
+                <span class="img-badge font-mono" style="background:#ef4444;">CONTAMINACIÓN</span>
+            </div>
+            <div class="polaroid-caption">
+                <h4 class="editable-title" contenteditable="true">${title}</h4>
+                <p class="editable-desc" contenteditable="true">${desc}</p>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span class="polaroid-date font-mono">${dateStr}</span>
+                    <button class="btn-danger-outline small-btn btn-del-polaroid" style="padding: 2px 6px; font-size:10px;"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            </div>
+        `;
+
+        card.querySelector('.btn-del-polaroid').addEventListener('click', () => {
+            if (confirm("¿Estás seguro de que deseas eliminar esta evidencia de contaminación?")) {
+                card.remove();
+            }
+        });
+
+        contamGalleryGrid.insertBefore(card, contamGalleryGrid.firstChild);
+    };
+
+    // ----------------------------------------------------
+    // 12. GESTIÓN DEL CUESTIONARIO ACADÉMICO PERSISTENTE (CRUD)
+    // ----------------------------------------------------
+    // Al cargar la página, cargamos los datos guardados en LocalStorage
+    const loadQuestionnaireData = () => {
+        const stored = localStorage.getItem('penicillium_answers_v2');
+        if (stored) {
+            try {
+                state.cuestionarioRespuestas = JSON.parse(stored);
+            } catch (e) {
+                console.error("Error al parsear respuestas del cuestionario:", e);
+            }
+        }
+    };
+
+    // Renderiza dinámicamente las respuestas guardadas, imágenes y configura los botones
     const renderQuestionnaire = () => {
-        loadQuestionnaireAnswers();
+        loadQuestionnaireData();
         
         for (let q = 1; q <= 5; q++) {
-            const container = document.getElementById(`qcard-${q}`);
-            if (!container) continue;
-            
             const savedAnsBox = document.getElementById(`saved-ans-${q}`);
             const attachedImgBox = document.getElementById(`attached-img-${q}`);
             const editForm = document.getElementById(`edit-form-${q}`);
-            const textInput = document.getElementById(`q-input-${q}`);
+            const inputField = document.getElementById(`q-input-${q}`);
             const fileStatus = document.getElementById(`q-file-status-${q}`);
             
-            const btnSave = container.querySelector('.btn-save-answer');
-            const btnEdit = container.querySelector('.btn-edit-answer');
-            const btnDelete = container.querySelector('.btn-delete-answer');
+            const btnSave = document.querySelector(`.btn-save-answer[data-q="${q}"]`);
+            const btnEdit = document.querySelector(`.btn-edit-answer[data-q="${q}"]`);
+            const btnDelete = document.querySelector(`.btn-delete-answer[data-q="${q}"]`);
             
-            const qData = state.cuestionarioRespuestas[q] || { texto: '', imagen: '' };
+            const item = state.cuestionarioRespuestas[q];
             
-            // Reset forms and display view mode by default
-            editForm.style.display = "none";
-            btnSave.style.display = "none";
-            btnEdit.style.display = "inline-flex";
-            btnEdit.innerText = qData.texto ? "Editar Respuesta" : "Responder";
-            
-            // Set text box value
-            textInput.value = qData.texto;
-            
-            // Render view box
-            if (qData.texto) {
-                savedAnsBox.innerHTML = `<p class="ans-paragraph">${escapeHTML(qData.texto)}</p>`;
+            // 1. Mostrar respuesta de texto
+            if (item && item.texto.trim() !== '') {
+                savedAnsBox.innerHTML = `<p>${escapeHTML(item.texto)}</p>`;
+                inputField.value = item.texto;
             } else {
-                savedAnsBox.innerHTML = `<p class="answer-placeholder"><em>Aún no has guardado una respuesta para esta pregunta. Haz clic en "Responder" abajo para redactar.</em></p>`;
+                savedAnsBox.innerHTML = `<p class="answer-placeholder"><em>Aún no has guardado una respuesta para esta pregunta. Haz clic en "Editar Respuesta" abajo para redactar.</em></p>`;
+                inputField.value = '';
             }
             
-            // Render attached image in view box if exists
-            if (qData.imagen) {
-                attachedImgBox.innerHTML = `
-                    <img src="${qData.imagen}" alt="Muestra pregunta ${q}">
-                    <button class="btn-remove-q-photo" data-q="${q}" title="Eliminar Imagen"><i class="fa-solid fa-trash-can"></i></button>
-                `;
-                attachedImgBox.style.display = "block";
-                
-                // Bind delete inside view photo
-                attachedImgBox.querySelector('.btn-remove-q-photo').addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    if (confirm("🗑️ ¿Deseas eliminar la foto adjunta a esta pregunta?")) {
-                        state.cuestionarioRespuestas[q].imagen = '';
-                        saveQuestionnaireAnswers();
-                        renderQuestionnaire();
-                    }
-                });
+            // 2. Mostrar imagen adjunta
+            if (item && item.imagen && item.imagen !== '') {
+                attachedImgBox.innerHTML = `<img src="${item.imagen}" alt="Evidencia de Laboratorio P${q}" />`;
+                attachedImgBox.style.display = 'block';
+                fileStatus.innerText = "✓ Imagen adjunta correctamente";
+                fileStatus.style.color = "var(--neon-emerald)";
             } else {
-                attachedImgBox.style.display = "none";
                 attachedImgBox.innerHTML = '';
+                attachedImgBox.style.display = 'none';
+                fileStatus.innerText = "Sin imagen cargada";
+                fileStatus.style.color = "#64748b";
             }
         }
     };
 
-    const bindQuestionnaireHandlers = () => {
-        // Trigger file input uploaders
-        document.querySelectorAll('.btn-trigger-file').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+    // Registrar manejadores de eventos CRUD para los cuestionarios
+    const initQuestionnaireEvents = () => {
+        // Disparar diálogos de selección de archivos ocultos
+        const triggerBtns = document.querySelectorAll('.btn-trigger-file');
+        triggerBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
                 const targetInputId = btn.getAttribute('data-target-input');
-                document.getElementById(targetInputId).click();
+                const fileInput = document.getElementById(targetInputId);
+                if (fileInput) fileInput.click();
             });
         });
 
-        // Handle file change selection
-        document.querySelectorAll('.q-file-uploader').forEach(input => {
-            input.addEventListener('change', (e) => {
-                const qIndex = parseInt(input.getAttribute('data-q-index'));
+        // Manejar subida de archivos y conversión a Base64
+        const fileUploaders = document.querySelectorAll('.q-file-uploader');
+        fileUploaders.forEach(uploader => {
+            uploader.addEventListener('change', (e) => {
+                const qIndex = e.target.getAttribute('data-q-index');
                 const file = e.target.files[0];
                 const statusSpan = document.getElementById(`q-file-status-${qIndex}`);
                 
                 if (file) {
                     if (file.size > 3 * 1024 * 1024) {
-                        alert("❌ La imagen supera el límite de 3MB.");
-                        input.value = '';
+                        alert("⚠️ La imagen excede el límite de 3MB. Por favor sube una imagen comprimida.");
+                        uploader.value = '';
                         return;
                     }
                     
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                        state.tempQFile[qIndex] = event.target.result; // Temporarily hold Base64 data
-                        statusSpan.innerText = `Cargado: ${file.name.substring(0, 15)}...`;
-                        statusSpan.style.color = "#10b981";
+                        state.tempQFile[qIndex] = event.target.result; // Guardar base64 temporalmente
+                        statusSpan.innerText = `✓ Imagen lista (${file.name})`;
+                        statusSpan.style.color = "var(--neon-cyan)";
                     };
                     reader.readAsDataURL(file);
                 }
             });
         });
 
-        // Handle Edit toggle click
-        document.querySelectorAll('.btn-edit-answer').forEach(btn => {
+        // Configurar botones de "Editar Respuesta"
+        const editBtns = document.querySelectorAll('.btn-edit-answer');
+        editBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const qIndex = parseInt(btn.getAttribute('data-q'));
-                const container = document.getElementById(`qcard-${qIndex}`);
+                const q = btn.getAttribute('data-q');
+                const editForm = document.getElementById(`edit-form-${q}`);
+                const savedAnsBox = document.getElementById(`saved-ans-${q}`);
+                const btnSave = document.querySelector(`.btn-save-answer[data-q="${q}"]`);
                 
-                const editForm = document.getElementById(`edit-form-${qIndex}`);
-                const btnSave = container.querySelector('.btn-save-answer');
-                const fileStatus = document.getElementById(`q-file-status-${qIndex}`);
-                
-                editForm.style.display = "block";
-                btnSave.style.display = "inline-flex";
-                btn.style.display = "none";
-                
-                // Reset temp image upload holders
-                state.tempQFile[qIndex] = '';
-                fileStatus.innerText = "Sin imagen cargada";
-                fileStatus.style.color = "var(--text-muted)";
+                savedAnsBox.style.display = 'none';
+                editForm.style.display = 'flex';
+                btnSave.style.display = 'inline-block';
+                btn.style.display = 'none';
             });
         });
 
-        // Handle Save changes click
-        document.querySelectorAll('.btn-save-answer').forEach(btn => {
+        // Configurar botones de "Guardar Cambios"
+        const saveBtns = document.querySelectorAll('.btn-save-answer');
+        saveBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const qIndex = parseInt(btn.getAttribute('data-q'));
-                const container = document.getElementById(`qcard-${qIndex}`);
+                const q = btn.getAttribute('data-q');
+                const editForm = document.getElementById(`edit-form-${q}`);
+                const savedAnsBox = document.getElementById(`saved-ans-${q}`);
+                const inputField = document.getElementById(`q-input-${q}`);
+                const btnEdit = document.querySelector(`.btn-edit-answer[data-q="${q}"]`);
                 
-                const textInput = document.getElementById(`q-input-${qIndex}`);
-                const fileUploader = document.getElementById(`q-file-${qIndex}`);
+                const texto = inputField.value;
                 
-                const textValue = textInput.value.trim();
-                const attachedBase64 = state.tempQFile[qIndex];
-                
-                if (!state.cuestionarioRespuestas[qIndex]) {
-                    state.cuestionarioRespuestas[qIndex] = { texto: '', imagen: '' };
+                // Si hay una nueva imagen cargada en base64, la usamos. Si no, conservamos la que había.
+                let imagen = state.cuestionarioRespuestas[q]?.imagen || '';
+                if (state.tempQFile[q] && state.tempQFile[q] !== '') {
+                    imagen = state.tempQFile[q];
+                    state.tempQFile[q] = ''; // Limpiar el buffer temporal
                 }
                 
-                // Save values
-                state.cuestionarioRespuestas[qIndex].texto = textValue;
-                if (attachedBase64) {
-                    state.cuestionarioRespuestas[qIndex].imagen = attachedBase64;
-                }
+                // Actualizar base de datos del estado
+                state.cuestionarioRespuestas[q] = { texto, imagen };
                 
-                saveQuestionnaireAnswers();
+                // Guardar en LocalStorage
+                localStorage.setItem('penicillium_answers_v2', JSON.stringify(state.cuestionarioRespuestas));
+                
+                // Re-renderizar la UI para esta tarjeta
                 renderQuestionnaire();
                 
-                // Clean input fields
-                fileUploader.value = '';
-                state.tempQFile[qIndex] = '';
+                // Regresar estados visibles
+                editForm.style.display = 'none';
+                savedAnsBox.style.display = 'block';
+                btn.style.display = 'none';
+                btnEdit.style.display = 'inline-block';
             });
         });
 
-        // Handle Delete/Erase question answers
-        document.querySelectorAll('.btn-delete-answer').forEach(btn => {
+        // Configurar botones de "Borrar Todo"
+        const deleteBtns = document.querySelectorAll('.btn-delete-answer');
+        deleteBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                const qIndex = parseInt(btn.getAttribute('data-q'));
-                if (confirm(`🗑️ ¿Estás seguro de que deseas borrar toda tu respuesta y foto de la Pregunta ${qIndex}?`)) {
-                    state.cuestionarioRespuestas[qIndex] = { texto: '', imagen: '' };
-                    state.tempQFile[qIndex] = '';
+                const q = btn.getAttribute('data-q');
+                if (confirm(`¿Estás seguro de que deseas borrar la respuesta e imagen de la Pregunta ${q}?`)) {
+                    // Resetear el estado para esta pregunta
+                    state.cuestionarioRespuestas[q] = { texto: '', imagen: '' };
+                    state.tempQFile[q] = '';
                     
-                    document.getElementById(`q-input-${qIndex}`).value = '';
-                    document.getElementById(`q-file-${qIndex}`).value = '';
+                    // Guardar en LocalStorage
+                    localStorage.setItem('penicillium_answers_v2', JSON.stringify(state.cuestionarioRespuestas));
                     
-                    saveQuestionnaireAnswers();
+                    // Limpiar el selector de archivos
+                    const fileInput = document.getElementById(`q-file-${q}`);
+                    if (fileInput) fileInput.value = '';
+                    
                     renderQuestionnaire();
+                    
+                    // Forzar el estado de vista no editable
+                    const editForm = document.getElementById(`edit-form-${q}`);
+                    const savedAnsBox = document.getElementById(`saved-ans-${q}`);
+                    const btnSave = document.querySelector(`.btn-save-answer[data-q="${q}"]`);
+                    const btnEdit = document.querySelector(`.btn-edit-answer[data-q="${q}"]`);
+                    
+                    editForm.style.display = 'none';
+                    savedAnsBox.style.display = 'block';
+                    btnSave.style.display = 'none';
+                    btnEdit.style.display = 'inline-block';
                 }
             });
         });
     };
-
+    
+    // Función auxiliar para sanitizar las entradas de texto
     const escapeHTML = (str) => {
-        return str
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+        return str.replace(/[&<>'"]/g, 
+            tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag)
+        );
     };
 
     // ----------------------------------------------------
-    // 13. GENERAL LOCAL STORAGE GALLERY & FILE UPLOADERS
+    // 13. UTILITY INITIALISERS (RGB solvers)
     // ----------------------------------------------------
-    const bindUploaderEvents = (dropZoneEl, inputEl, storageKey, gridEl, isContam = false) => {
-        dropZoneEl.addEventListener('click', () => inputEl.click());
-
-        dropZoneEl.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZoneEl.style.borderColor = "#fbbf24";
-            dropZoneEl.style.background = "rgba(251, 191, 36, 0.08)";
-        });
-
-        dropZoneEl.addEventListener('dragleave', () => {
-            dropZoneEl.style.borderColor = "rgba(255, 255, 255, 0.15)";
-            dropZoneEl.style.background = "rgba(255, 255, 255, 0.02)";
-        });
-
-        dropZoneEl.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZoneEl.style.borderColor = "rgba(255, 255, 255, 0.15)";
-            dropZoneEl.style.background = "rgba(255, 255, 255, 0.02)";
-
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                processFile(files[0], storageKey, gridEl, isContam);
-            }
-        });
-
-        inputEl.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                processFile(e.target.files[0], storageKey, gridEl, isContam);
-            }
-        });
+    const hexToRGBA = (hex, alpha) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     };
 
-    const processFile = (file, storageKey, gridEl, isContam) => {
-        if (file.size > 3 * 1024 * 1024) {
-            alert("❌ La imagen supera el límite de 3MB.");
-            return;
-        }
-        if (!file.type.startsWith('image/')) {
-            alert("❌ Por favor, selecciona solo archivos de imagen.");
-            return;
-        }
+    // Initialize simulation
+    bindMediumToggleListeners();
+    drawGrowthCurveChart();
+    initQuestionnaireEvents();
+    renderQuestionnaire();
+    renderTableLogs();
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const base64 = event.target.result;
-            const id = 'img_' + Date.now();
-            const filename = file.name;
-            const captionTitle = filename.split('.')[0];
-            const captionDesc = isContam ? "Evidencia de contaminante biológico observado en cultivo." : "Observación estructural al microscopio.";
-            
-            addPolaroidCardToGrid(gridEl, id, base64, captionTitle, captionDesc, false, storageKey);
-            saveImageLocally(storageKey, id, base64, filename, captionTitle, captionDesc);
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const addPolaroidCardToGrid = (gridEl, id, imgSrc, title, desc, isPreLoaded = false, storageKey = '') => {
-        const polaroid = document.createElement('div');
-        polaroid.className = "polaroid-card animate-slide-in";
-        if (id) polaroid.setAttribute('data-id', id);
-
-        polaroid.innerHTML = `
-            <div class="polaroid-img-wrapper">
-                <img src="${imgSrc}" alt="${title}">
-                <span class="img-badge img-badge-user font-mono">${isPreLoaded ? 'BITÁCORA' : 'SUBIDO POR TI'}</span>
-            </div>
-            <div class="polaroid-caption">
-                <h4 class="editable-title" contenteditable="true">${title}</h4>
-                <p class="editable-desc" contenteditable="true">${desc}</p>
-                <span class="polaroid-date font-mono">
-                    Registro de Ensayo 
-                    <button class="btn-delete-polaroid" style="background:none; border:none; color:#ef4444; float:right; cursor:pointer;" title="Eliminar">
-                        <i class="fa-solid fa-trash-can"></i>
-                    </button>
-                </span>
-            </div>
-        `;
-
-        gridEl.insertBefore(polaroid, gridEl.firstChild);
-
-        polaroid.querySelector('.btn-delete-polaroid').addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (confirm("🗑️ ¿Eliminar esta foto de la galería?")) {
-                polaroid.remove();
-                if (id && storageKey) {
-                    deleteImageLocally(storageKey, id);
-                }
-            }
-        });
-
-        if (id && storageKey) {
-            const titleEl = polaroid.querySelector('.editable-title');
-            const descEl = polaroid.querySelector('.editable-desc');
-            const updateLocalTexts = () => {
-                updateImageTextsLocally(storageKey, id, titleEl.innerText, descEl.innerText);
-            };
-            titleEl.addEventListener('blur', updateLocalTexts);
-            descEl.addEventListener('blur', updateLocalTexts);
-        }
-    };
-
-    const saveImageLocally = (storageKey, id, base64, filename, title, desc) => {
-        const list = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        list.push({
-            id,
-            base64,
-            filename,
-            captionTitle: title,
-            captionDesc: desc,
-            date: new Date().toLocaleDateString('es-ES')
-        });
-        localStorage.setItem(storageKey, JSON.stringify(list));
-    };
-
-    const loadImagesLocally = (storageKey, gridEl) => {
-        const list = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        list.forEach(img => {
-            addPolaroidCardToGrid(gridEl, img.id, img.base64, img.captionTitle, img.captionDesc, true, storageKey);
-        });
-    };
-
-    const deleteImageLocally = (storageKey, id) => {
-        let list = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        list = list.filter(img => img.id !== id);
-        localStorage.setItem(storageKey, JSON.stringify(list));
-    };
-
-    const updateImageTextsLocally = (storageKey, id, title, desc) => {
-        const list = JSON.parse(localStorage.getItem(storageKey) || '[]');
-        const img = list.find(i => i.id === id);
-        if (img) {
-            img.captionTitle = title;
-            img.captionDesc = desc;
-            localStorage.setItem(storageKey, JSON.stringify(list));
-        }
-    };
-
-    // ----------------------------------------------------
-    // 14. INITIALIZATION ROUTINES
-    // ----------------------------------------------------
-    const initApp = () => {
-        bindMediumToggleListeners();
-
-        loadLogsFromLocalStorage();
-        renderLogTable();
-
-        // Bind Questionnaire Events & Load saved answers
-        bindQuestionnaireHandlers();
-        renderQuestionnaire();
-
-        bindUploaderEvents(uploadZone, imageUploadInput, 'penicillium_gallery_pics_v2', galleryGrid);
-        loadImagesLocally('penicillium_gallery_pics_v2', galleryGrid);
-
-        bindUploaderEvents(microUploadZone, microUploadInput, 'penicillium_micro_pics_v2', galleryGrid);
-        loadImagesLocally('penicillium_micro_pics_v2', galleryGrid);
-
-        bindUploaderEvents(contamUploadZone, contamUploadInput, 'penicillium_contam_pics_v2', contamGalleryGrid, true);
-        loadImagesLocally('penicillium_contam_pics_v2', contamGalleryGrid);
-
-        initGalleryCanvases();
-        
-        drawGrowthCurveChart();
-        drawSpectroscopyChart();
-        updateMicroscopeOcularDrawing();
-    };
-
-    initApp();
 });
+
