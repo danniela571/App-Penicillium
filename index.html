@@ -38,7 +38,7 @@
     <!-- Main Navigation Stepper (Responsive Tabs) -->
     <nav class="nav-stepper">
         <div class="stepper-scroll-container">
-            <button class="step-tab active" data-target="panel-cultivo">
+            <button class="step-tab active unlocked" data-target="panel-cultivo">
                 <span class="step-num">1</span>
                 <span class="step-label"><i class="fa-solid fa-seedling"></i> Cultivo</span>
             </button>
@@ -58,11 +58,11 @@
                 <span class="step-num">5</span>
                 <span class="step-label"><i class="fa-solid fa-eye"></i> Microscopía</span>
             </button>
-            <button class="step-tab" data-target="panel-bitacora">
+            <button class="step-tab unlocked" data-target="panel-bitacora">
                 <span class="step-num">6</span>
                 <span class="step-label"><i class="fa-solid fa-book-open"></i> Bitácora & Cuestionario</span>
             </button>
-            <button class="step-tab" data-target="panel-referencias">
+            <button class="step-tab unlocked" data-target="panel-referencias">
                 <span class="step-num">7</span>
                 <span class="step-label"><i class="fa-solid fa-graduation-cap"></i> Guía Científica</span>
             </button>
@@ -227,6 +227,12 @@
                                     <div class="flask-rim"></div>
                                     <div class="flask-neck"></div>
                                     <div class="flask-body">
+                                        <!-- Graduation Marks -->
+                                        <div class="flask-graduations">
+                                            <div class="flask-grad" style="bottom: 75%;"><span>— 150ml</span></div>
+                                            <div class="flask-grad" style="bottom: 50%;"><span>— 100ml</span></div>
+                                            <div class="flask-grad" style="bottom: 25%;"><span>— 50ml</span></div>
+                                        </div>
                                         <div class="flask-liquid" id="flask-liquid-layer">
                                             <div class="liquid-mycelium-pellets" id="mycelium-pellets-container">
                                                 <!-- Dynamic floating pellets will draw here -->
@@ -695,105 +701,112 @@
                             </div>
                             <div class="spec-res-box">
                                 <span class="res-lbl">Familia Química</span>
-                                <span class="res-val text-neon font-mono" id="spec-res-family">-</span>
+                                <span class="res-val text-cyan" id="spec-res-family">-</span>
                             </div>
                         </div>
 
                         <div class="console-box font-mono" id="spec-console">
-                            [ESPECTROSCOPÍA]: Coloca el blanco de calibración para ajustar el detector a cero absorbancia...
+                            [ESPECTROFOTÓMETRO]: Apagado. Realice la calibración del blanco para iniciar...
                         </div>
 
-                        <button id="btn-proceder-microscopio" class="btn-secondary" style="margin-top: 10px;" disabled>
-                            <i class="fa-solid fa-eye"></i> Proceder al Microscopio <i class="fa-solid fa-arrow-right"></i>
+                        <button id="btn-proceder-microscopio" class="btn-secondary" disabled>
+                            <i class="fa-solid fa-chevron-right"></i> Ir a Microscopía Óptica <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- STEP 5: VIRTUAL MICROSCOPE -->
+        <!-- STEP 5: MICROSCOPY -->
         <section id="panel-microscopia" class="panel-section">
             <div class="grid-layout">
-                <!-- Microscope controls -->
+                <!-- Microscope parameters card -->
                 <div class="card glass-card panel-left">
                     <div class="card-header">
-                        <h2><i class="fa-solid fa-sliders text-neon"></i> Controles del Microscopio</h2>
-                        <p class="card-desc">Enfoca y analiza las muestras conidiales o contaminaciones biológicas.</p>
+                        <h2><i class="fa-solid fa-sliders text-emerald"></i> Controles del Microscopio</h2>
+                        <p class="card-desc">Calibra el micrómetro y la platina para observar el cultivo fúngico.</p>
                     </div>
                     <div class="card-body">
                         
-                        <!-- Objective Lenses Selector -->
+                        <!-- Sample Loader -->
                         <div class="input-group">
-                            <label class="input-label"><i class="fa-solid fa-magnifying-glass-plus"></i> Lente Objetivo (Aumento)</label>
-                            <div class="zoom-btn-selector">
-                                <button class="zoom-btn active" data-zoom="100">10x (100x Total)</button>
-                                <button class="zoom-btn" data-zoom="400">40x (400x Estructural)</button>
-                                <button class="zoom-btn" data-zoom="1000">100x (1000x Inmersión)</button>
-                            </div>
-                        </div>
-
-                        <!-- Sample Selector -->
-                        <div class="input-group">
-                            <label class="input-label"><i class="fa-solid fa-clipboard-list"></i> Cargar Portaobjetos (Muestra)</label>
+                            <label class="input-label"><i class="fa-solid fa-folder-open"></i> Seleccionar Muestra de Platina</label>
                             <div class="custom-select-wrapper">
                                 <select id="micro-sample-select" class="custom-select">
-                                    <option value="penicillium_active" selected>Muestra de Penicillium sp. del Cultivo</option>
-                                    <option value="contam_aspergillus">Contaminación Fúngica: Aspergillus sp.</option>
-                                    <option value="contam_rhizopus">Contaminación Fúngica: Rhizopus sp.</option>
-                                    <option value="contam_bacterias">Contaminación Bacteriana: Cocos y Bacilos</option>
+                                    <option value="penicillium_active" selected>Muestra de mi cultivo de Penicillium sp. (Activa)</option>
+                                    <option value="contam_aspergillus">Muestra Contaminada - Aspergillus sp. (Control)</option>
+                                    <option value="contam_rhizopus">Muestra Contaminada - Rhizopus sp. (Control)</option>
+                                    <option value="contam_bacterias">Muestra Contaminada - Colonias Bacterianas (Control)</option>
                                 </select>
                             </div>
                         </div>
 
-                        <!-- Micrometric Focus Slider -->
+                        <!-- Objective Lens Selector -->
+                        <div class="input-group">
+                            <label class="input-label"><i class="fa-solid fa-circle-dot"></i> Lentes Objetivos (Aumento)</label>
+                            <div class="zoom-btn-selector">
+                                <button class="zoom-btn active" data-zoom="100">10x (100x Total)</button>
+                                <button class="zoom-btn" data-zoom="400">40x (400x Total)</button>
+                                <button class="zoom-btn" data-zoom="1000">100x (Ojo/1000x)</button>
+                            </div>
+                        </div>
+
+                        <!-- Focus adjustment slider -->
                         <div class="input-group">
                             <div class="slider-header">
-                                <label class="input-label"><i class="fa-solid fa-circle-nodes"></i> Enfoque Micrométrico</label>
+                                <label class="input-label"><i class="fa-solid fa-arrows-up-down"></i> Ajuste Fino de Enfoque (Micrómetro)</label>
                                 <span class="slider-value" id="focus-val">15</span>
                             </div>
                             <input type="range" id="focus-slider" min="0" max="100" value="15" class="custom-range">
                             <div class="slider-labels">
-                                <span>Muy Borroso</span>
-                                <span>Óptimo (50)</span>
-                                <span>Borroso</span>
+                                <span>Plano Inferior</span>
+                                <span>Enfocado (50)</span>
+                                <span>Plano Superior</span>
                             </div>
                         </div>
 
                         <div class="alert-box warning-alert" id="focus-alert">
-                            <i class="fa-solid fa-circle-exclamation"></i> Ajusta el mando de enfoque para resolver las estructuras.
-                        </div>
-
-                        <!-- Microscope uploader zone -->
-                        <div class="upload-dropzone" id="micro-upload-zone" style="margin-top: 15px; border-style: dotted; border-width: 1px; padding: 12px;">
-                            <i class="fa-solid fa-upload cloud-upload-icon" style="font-size: 18px; margin-bottom: 5px;"></i>
-                            <div class="upload-zone-text" style="font-size: 11px;">
-                                <h4 style="margin:0;">Subir Imagen de tu Microscopio Real</h4>
-                                <p style="margin:2px 0 0 0; font-size:10px;">Adjunta tus observaciones físicas</p>
-                            </div>
-                            <input type="file" id="micro-upload-input" accept="image/*" class="file-hidden-input">
-                        </div>
-
-                        <div class="theory-box-mini font-outfit" id="microscope-guide-text">
-                            Cargando guía de microscopía...
+                            <i class="fa-solid fa-circle-exclamation"></i> Portaobjetos fuera de plano. Mueve el micrómetro para enfocar (Óptimo cerca de 50).
                         </div>
                     </div>
                 </div>
 
-                <!-- Microscope view area -->
+                <!-- Microscope Eyepiece visualizer -->
                 <div class="card glass-card panel-right">
                     <div class="card-header">
-                        <h2><i class="fa-solid fa-circle-dot text-neon"></i> Ocular del Microscopio Virtual</h2>
+                        <h2><i class="fa-solid fa-eye text-emerald"></i> Ocular del Microscopio</h2>
+                        <div class="status-indicator">
+                            <span class="pulse-dot green"></span>
+                            <span>Iluminación LED Activa</span>
+                        </div>
                     </div>
                     <div class="card-body ocular-body-area">
                         
                         <div class="microscope-structure-wrapper">
-                            <div class="microscope-eyepiece">
+                            <!-- Circular lens eyepiece -->
+                            <div class="microscope-eyepiece" id="ocular-view-element">
                                 <div class="ocular-reticle"></div>
-                                <div class="specimen-layer" id="ocular-view-element"></div>
+                                <div class="specimen-layer">
+                                    <canvas id="canvas-microscopia" class="ocular-view-canvas"></canvas>
+                                </div>
                             </div>
                         </div>
 
-                        <button id="btn-proceder-bitacora" class="btn-primary ripple" style="margin-top: 15px;">
+                        <div class="theory-box-mini font-outfit" id="microscope-guide-text" style="margin-top: 15px; width: 100%; min-height: 60px; font-size: 12px; line-height: 1.5;">
+                            Enfoque 100x: Se distingue la densa red de hilos entrelazados de hifas hialinas tabicadas (micelio vegetativo fúngico). La hifa septada es delgada y regular.
+                        </div>
+
+                        <!-- User photo micro uploader -->
+                        <div class="upload-dropzone" id="micro-upload-zone" style="margin-top: 15px; border-color: rgba(16, 185, 129, 0.25); background: rgba(16, 185, 129, 0.01);">
+                            <i class="fa-solid fa-file-image cloud-upload-icon" style="color: #10b981;"></i>
+                            <div class="upload-zone-text">
+                                <h3>Cargar Foto de Microscopio Real</h3>
+                                <p>Sube imágenes capturadas de tu microscopio físico de laboratorio real para archivarlas en la galería.</p>
+                            </div>
+                            <input type="file" id="micro-upload-input" accept="image/*" class="file-hidden-input">
+                        </div>
+
+                        <button id="btn-proceder-bitacora" class="btn-primary ripple" style="margin-top: 15px;" disabled>
                             <i class="fa-solid fa-book"></i> Llevar Ensayos a Bitácora <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
@@ -1226,7 +1239,6 @@
                                 <h3 class="paper-title">Production and characterization of red pigments by Penicillium purpurogenum.</h3>
                                 <p class="paper-authors">Sardaryan, E., et al. (2004) — <strong>Applied Microbiology and Biotechnology</strong>, 65(3), 252-258.</p>
                                 <p class="paper-summary">Este artículo describe experimentalmente cómo cultivar cepas silvestres del género <em>Penicillium</em> en reactores controlados a 25°C. Comprueba la extracción eficiente de la biomasa con solventes como acetato de etilo y metanol, y reporta su absorción en el espectro visible a 505 nm.</p>
-                                <a href="https://doi.org/10.1007/s00253-004-1620-6" target="_blank" class="paper-link font-mono"><i class="fa-solid fa-arrow-up-right-from-square"></i> DOI: 10.1007/s00253-004-1620-6</a>
                             </div>
                         </div>
 
@@ -1237,7 +1249,6 @@
                                 <h3 class="paper-title">Optimization of fermentation conditions for red pigment production from Penicillium sp. under submerged cultivation.</h3>
                                 <p class="paper-authors">Gunasekaran, S. and Poorniammal, R. (2008) — <strong>African Journal of Biotechnology</strong>, 7(12), 1894-1898.</p>
                                 <p class="paper-summary">Este estudio clave detalla los parámetros de agitación (200 rpm), pH (9.0) y temperatura óptima (30°C) para la biosíntesis de pigmentos antraquinónicos solubles de color rojo en fermentadores sumergidos líquidos de <em>Penicillium sp.</em> Proporciona la base de cálculo biológico para nuestro analizador de turbidez OD₆₀₀ en caldos.</p>
-                                <a href="https://doi.org/10.5897/AJB08.181" target="_blank" class="paper-link font-mono"><i class="fa-solid fa-arrow-up-right-from-square"></i> DOI: 10.5897/AJB08.181</a>
                             </div>
                         </div>
 
@@ -1247,7 +1258,6 @@
                                 <h3 class="paper-title">Optimization of Extraction Solvent for Fungal Pigments and Chromatographic Separation of Bioactive Compounds.</h3>
                                 <p class="paper-authors">Poorniammal, R., et al. (2021) — <strong>Journal of Pure and Applied Microbiology</strong>, 15(4), 2132-2144.</p>
                                 <p class="paper-summary">Un estudio exhaustivo que evalúa el rendimiento físico de extracción fúngica comparando la polaridad de diversos solventes (Agua, Etanol, Acetato de etilo, Cloroformo, n-Hexano). Corrobora que los solventes no polares como el n-hexano no logran disolver las azafilonas, sustentando la calibración del rendimiento de nuestro simulador.</p>
-                                <a href="https://doi.org/10.22207/JPAM.15.4.38" target="_blank" class="paper-link font-mono"><i class="fa-solid fa-arrow-up-right-from-square"></i> DOI: 10.22207/JPAM.15.4.38</a>
                             </div>
                         </div>
 
@@ -1257,7 +1267,6 @@
                                 <h3 class="paper-title">Exploring fungal biodiversity for the production of novel natural food colorants using a rapid screening method.</h3>
                                 <p class="paper-authors">Mapari, S. A., et al. (2009) — <strong>LWT - Food Science and Technology</strong>, 42(1), 299-308.</p>
                                 <p class="paper-summary">Este trabajo detalla la separación analítica por cromatografía de capa fina (TLC) de pigmentos fúngicos de alta pureza usando placas de gel de sílice y sistemas de solventes Hexano:Acetato de Etilo. Proporciona los espectros UV-Vis y coeficientes de migración molecular (R<sub>f</sub>) reales en los que basamos nuestro motor cromatográfico.</p>
-                                <a href="https://doi.org/10.1016/j.lwt.2008.06.009" target="_blank" class="paper-link font-mono"><i class="fa-solid fa-arrow-up-right-from-square"></i> DOI: 10.1016/j.lwt.2008.06.009</a>
                             </div>
                         </div>
 
