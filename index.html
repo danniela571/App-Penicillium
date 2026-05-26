@@ -706,107 +706,100 @@
                         </div>
 
                         <div class="console-box font-mono" id="spec-console">
-                            [ESPECTROFOTÓMETRO]: Apagado. Realice la calibración del blanco para iniciar...
+                            [ESPECTROSCOPÍA]: Coloca el blanco de calibración para ajustar el detector a cero absorbancia...
                         </div>
 
-                        <button id="btn-proceder-microscopio" class="btn-secondary" disabled>
-                            <i class="fa-solid fa-chevron-right"></i> Ir a Microscopía Óptica <i class="fa-solid fa-arrow-right"></i>
+                        <button id="btn-proceder-microscopio" class="btn-secondary" style="margin-top: 10px;" disabled>
+                            <i class="fa-solid fa-eye"></i> Proceder al Microscopio <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- STEP 5: MICROSCOPY -->
+        <!-- STEP 5: VIRTUAL MICROSCOPE -->
         <section id="panel-microscopia" class="panel-section">
             <div class="grid-layout">
-                <!-- Microscope parameters card -->
+                <!-- Microscope controls -->
                 <div class="card glass-card panel-left">
                     <div class="card-header">
-                        <h2><i class="fa-solid fa-sliders text-emerald"></i> Controles del Microscopio</h2>
-                        <p class="card-desc">Calibra el micrómetro y la platina para observar el cultivo fúngico.</p>
+                        <h2><i class="fa-solid fa-sliders text-neon"></i> Controles del Microscopio</h2>
+                        <p class="card-desc">Enfoca y analiza las muestras conidiales o contaminaciones biológicas.</p>
                     </div>
                     <div class="card-body">
                         
-                        <!-- Sample Loader -->
+                        <!-- Objective Lenses Selector -->
                         <div class="input-group">
-                            <label class="input-label"><i class="fa-solid fa-folder-open"></i> Seleccionar Muestra de Platina</label>
+                            <label class="input-label"><i class="fa-solid fa-magnifying-glass-plus"></i> Lente Objetivo (Aumento)</label>
+                            <div class="zoom-btn-selector">
+                                <button class="zoom-btn active" data-zoom="100">10x (100x Total)</button>
+                                <button class="zoom-btn" data-zoom="400">40x (400x Estructural)</button>
+                                <button class="zoom-btn" data-zoom="1000">100x (1000x Inmersión)</button>
+                            </div>
+                        </div>
+
+                        <!-- Sample Selector -->
+                        <div class="input-group">
+                            <label class="input-label"><i class="fa-solid fa-clipboard-list"></i> Cargar Portaobjetos (Muestra)</label>
                             <div class="custom-select-wrapper">
                                 <select id="micro-sample-select" class="custom-select">
-                                    <option value="penicillium_active" selected>Muestra de mi cultivo de Penicillium sp. (Activa)</option>
-                                    <option value="contam_aspergillus">Muestra Contaminada - Aspergillus sp. (Control)</option>
-                                    <option value="contam_rhizopus">Muestra Contaminada - Rhizopus sp. (Control)</option>
-                                    <option value="contam_bacterias">Muestra Contaminada - Colonias Bacterianas (Control)</option>
+                                    <option value="penicillium_active" selected>Muestra de Penicillium sp. del Cultivo</option>
+                                    <option value="contam_aspergillus">Contaminación Fúngica: Aspergillus sp.</option>
+                                    <option value="contam_rhizopus">Contaminación Fúngica: Rhizopus sp.</option>
+                                    <option value="contam_bacterias">Contaminación Bacteriana: Cocos y Bacilos</option>
                                 </select>
                             </div>
                         </div>
 
-                        <!-- Objective Lens Selector -->
-                        <div class="input-group">
-                            <label class="input-label"><i class="fa-solid fa-circle-dot"></i> Lentes Objetivos (Aumento)</label>
-                            <div class="zoom-btn-selector">
-                                <button class="zoom-btn active" data-zoom="100">10x (100x Total)</button>
-                                <button class="zoom-btn" data-zoom="400">40x (400x Total)</button>
-                                <button class="zoom-btn" data-zoom="1000">100x (Ojo/1000x)</button>
-                            </div>
-                        </div>
-
-                        <!-- Focus adjustment slider -->
+                        <!-- Micrometric Focus Slider -->
                         <div class="input-group">
                             <div class="slider-header">
-                                <label class="input-label"><i class="fa-solid fa-arrows-up-down"></i> Ajuste Fino de Enfoque (Micrómetro)</label>
+                                <label class="input-label"><i class="fa-solid fa-circle-nodes"></i> Enfoque Micrométrico</label>
                                 <span class="slider-value" id="focus-val">15</span>
                             </div>
                             <input type="range" id="focus-slider" min="0" max="100" value="15" class="custom-range">
                             <div class="slider-labels">
-                                <span>Plano Inferior</span>
-                                <span>Enfocado (50)</span>
-                                <span>Plano Superior</span>
+                                <span>Muy Borroso</span>
+                                <span>Óptimo (50)</span>
+                                <span>Borroso</span>
                             </div>
                         </div>
 
                         <div class="alert-box warning-alert" id="focus-alert">
-                            <i class="fa-solid fa-circle-exclamation"></i> Portaobjetos fuera de plano. Mueve el micrómetro para enfocar (Óptimo cerca de 50).
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Microscope Eyepiece visualizer -->
-                <div class="card glass-card panel-right">
-                    <div class="card-header">
-                        <h2><i class="fa-solid fa-eye text-emerald"></i> Ocular del Microscopio</h2>
-                        <div class="status-indicator">
-                            <span class="pulse-dot green"></span>
-                            <span>Iluminación LED Activa</span>
-                        </div>
-                    </div>
-                    <div class="card-body ocular-body-area">
-                        
-                        <div class="microscope-structure-wrapper">
-                            <!-- Circular lens eyepiece -->
-                            <div class="microscope-eyepiece" id="ocular-view-element">
-                                <div class="ocular-reticle"></div>
-                                <div class="specimen-layer">
-                                    <canvas id="canvas-microscopia" class="ocular-view-canvas"></canvas>
-                                </div>
-                            </div>
+                            <i class="fa-solid fa-circle-exclamation"></i> Ajusta el mando de enfoque para resolver las estructuras.
                         </div>
 
-                        <div class="theory-box-mini font-outfit" id="microscope-guide-text" style="margin-top: 15px; width: 100%; min-height: 60px; font-size: 12px; line-height: 1.5;">
-                            Enfoque 100x: Se distingue la densa red de hilos entrelazados de hifas hialinas tabicadas (micelio vegetativo fúngico). La hifa septada es delgada y regular.
-                        </div>
-
-                        <!-- User photo micro uploader -->
-                        <div class="upload-dropzone" id="micro-upload-zone" style="margin-top: 15px; border-color: rgba(16, 185, 129, 0.25); background: rgba(16, 185, 129, 0.01);">
-                            <i class="fa-solid fa-file-image cloud-upload-icon" style="color: #10b981;"></i>
-                            <div class="upload-zone-text">
-                                <h3>Cargar Foto de Microscopio Real</h3>
-                                <p>Sube imágenes capturadas de tu microscopio físico de laboratorio real para archivarlas en la galería.</p>
+                        <!-- Microscope uploader zone -->
+                        <div class="upload-dropzone" id="micro-upload-zone" style="margin-top: 15px; border-style: dotted; border-width: 1px; padding: 12px;">
+                            <i class="fa-solid fa-upload cloud-upload-icon" style="font-size: 18px; margin-bottom: 5px;"></i>
+                            <div class="upload-zone-text" style="font-size: 11px;">
+                                <h4 style="margin:0;">Subir Imagen de tu Microscopio Real</h4>
+                                <p style="margin:2px 0 0 0; font-size:10px;">Adjunta tus observaciones físicas</p>
                             </div>
                             <input type="file" id="micro-upload-input" accept="image/*" class="file-hidden-input">
                         </div>
 
-                        <button id="btn-proceder-bitacora" class="btn-primary ripple" style="margin-top: 15px;" disabled>
+                        <div class="theory-box-mini font-outfit" id="microscope-guide-text">
+                            Cargando guía de microscopía...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Microscope view area -->
+                <div class="card glass-card panel-right">
+                    <div class="card-header">
+                        <h2><i class="fa-solid fa-circle-dot text-neon"></i> Ocular del Microscopio Virtual</h2>
+                    </div>
+                    <div class="card-body ocular-body-area">
+                        
+                        <div class="microscope-structure-wrapper">
+                            <div class="microscope-eyepiece">
+                                <div class="ocular-reticle"></div>
+                                <div class="specimen-layer" id="ocular-view-element"></div>
+                            </div>
+                        </div>
+
+                        <button id="btn-proceder-bitacora" class="btn-primary ripple" style="margin-top: 15px;">
                             <i class="fa-solid fa-book"></i> Llevar Ensayos a Bitácora <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
@@ -1290,3 +1283,4 @@
     <script src="app.js"></script>
 </body>
 </html>
+
