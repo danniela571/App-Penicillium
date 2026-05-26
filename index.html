@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laboratorio Virtual v2.0 - Simulador de Penicillium sp. y Pigmentos Naturales</title>
+    <title>Laboratorio Virtual - Simulador de Penicillium sp. y Pigmentos Naturales</title>
     <meta name="description" content="Simulador de laboratorio virtual interactivo para observar el crecimiento de Penicillium sp., extracción de pigmentos naturales, cromatografía de capa fina (TLC) y espectroscopía UV-Vis.">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +23,7 @@
                 <i class="fa-solid fa-flask-vial glowing-icon"></i>
                 <div class="logo-text">
                     <h1>Penicillium<span class="highlight">.sp</span></h1>
-                    <p class="subtitle font-outfit">Virtual Biotech Lab Simulator v2.0</p>
+                    <p class="subtitle font-outfit">Virtual Biotech Lab Simulator v2.3</p>
                 </div>
             </div>
             <div class="header-actions">
@@ -238,10 +238,10 @@
                             </div>
                         </div>
 
-                        <!-- Fungal growth kinetics phase chart -->
+                        <!-- Fungal growth kinetics phase chart (IMPROVED HEIGHT AND STYLE) -->
                         <div class="growth-chart-frame">
-                            <span class="stat-label"><i class="fa-solid fa-chart-area"></i> Curva de Fases de Crecimiento Cinético</span>
-                            <div class="chart-container-wrapper" style="height: 120px; margin-top: 5px;">
+                            <span class="stat-label"><i class="fa-solid fa-chart-area"></i> Curva de Fases de Crecimiento Cinético en Tiempo Real</span>
+                            <div class="chart-container-wrapper" style="height: 165px; margin-top: 8px;">
                                 <canvas id="canvas-curva-crecimiento"></canvas>
                             </div>
                         </div>
@@ -264,18 +264,6 @@
                             </div>
                         </div>
 
-                        <!-- Turbidity Measurement Module -->
-                        <div class="input-group" id="turbidity-module-container" style="display: none; width: 100%; margin-top: 15px; border-top: 1px solid var(--border-color); padding-top: 15px;">
-                            <label class="input-label"><i class="fa-solid fa-square-poll-vertical"></i> Análisis de Turbidez Óptica (OD₆₀₀) en Medio Líquido</label>
-                            <div class="yield-dashboard" style="grid-template-columns: 1fr; margin-bottom: 10px;">
-                                <div class="yield-box" style="border-left: 3px solid var(--neon-cyan); background: rgba(6, 182, 212, 0.03); display: flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 12px 16px;">
-                                    <span class="yield-label" style="margin-bottom:0;">Densidad Óptica (OD₆₀₀):</span>
-                                    <span class="yield-value font-mono text-cyan" id="turbidez-val" style="font-size: 20px;">0.000 OD</span>
-                                </div>
-                            </div>
-                            <button id="btn-medir-turbidez" class="btn-secondary small-btn" style="width: 100% !important; border-color: rgba(6, 182, 212, 0.35);"><i class="fa-solid fa-circle-nodes"></i> Medir Turbidez Muestra Líquida</button>
-                        </div>
-
                         <div class="console-box font-mono" id="cultivo-console">
                             [SISTEMA]: Cámara fúngica inactiva. Configura los parámetros y presiona "Iniciar Incubación Virtual"...
                         </div>
@@ -288,70 +276,109 @@
             </div>
         </section>
 
-        <!-- STEP 2: EXTRACTION -->
+        <!-- STEP 2: EXTRACTION & TURBIDITY QC -->
         <section id="panel-extraccion" class="panel-section">
             <div class="grid-layout">
-                <!-- Extraction controls -->
-                <div class="card glass-card panel-left">
-                    <div class="card-header">
-                        <h2><i class="fa-solid fa-mortar-pestle text-purple"></i> Protocolo de Extracción</h2>
-                        <p class="card-desc">Separa químicamente los pigmentos de la biomasa celular cosechada.</p>
+                <!-- Left Column: Turbidity Quality Control + Extraction Parameters -->
+                <div class="panel-left animate-slide-in">
+                    
+                    <!-- NEW / SHIFTED: Turbidity analyzer card (Quality Control stage) -->
+                    <div class="card glass-card" id="turbidity-card-container" style="margin-bottom: 20px; border-left: 3px solid var(--neon-cyan);">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-square-poll-vertical text-cyan"></i> 1. Control de Calidad Pre-Extracción</h2>
+                            <p class="card-desc">Análisis de Densidad Celular (OD₆₀₀) en medio líquido para cuantificar la biomasa suspendida.</p>
+                        </div>
+                        <div class="card-body" style="padding-top: 10px;">
+                            
+                            <!-- Widget A: Active for Liquid Broths -->
+                            <div id="turbidity-active-widget" style="display: none;">
+                                <div class="yield-dashboard" style="grid-template-columns: 1fr; margin-bottom: 12px;">
+                                    <div class="yield-box" style="border-left: 3px solid var(--neon-cyan); background: rgba(6, 182, 212, 0.03); display: flex; flex-direction: row; justify-content: space-between; align-items: center; padding: 12px 16px;">
+                                        <span class="yield-label" style="margin-bottom:0; font-size: 13px;">Densidad Óptica (OD₆₀₀):</span>
+                                        <span class="yield-value font-mono text-cyan" id="turbidez-val" style="font-size: 24px; text-shadow: 0 0 8px rgba(6, 182, 212, 0.4);">0.000 OD</span>
+                                    </div>
+                                </div>
+                                <p class="theory-box-mini font-outfit" style="margin-bottom: 15px; font-size: 12px; line-height: 1.5; color: #94a3b8; background: rgba(255,255,255,0.01);">
+                                    <i class="fa-solid fa-flask-vial text-cyan"></i> <strong>Criterio Científico (Gunasekaran & Poorniammal, 2008):</strong> En cultivos sumergidos, registrar la turbidez a 600 nm calibra la concentración celular antes de lisar la pared celular, validando el rendimiento de fermentación.
+                                </p>
+                                <button id="btn-medir-turbidez" class="btn-primary ripple" style="width: 100% !important; border-color: rgba(6, 182, 212, 0.4);"><i class="fa-solid fa-circle-nodes"></i> Registrar Turbidez OD₆₀₀</button>
+                            </div>
+                            
+                            <!-- Widget B: Inactive for Solid Agars -->
+                            <div id="turbidity-inactive-widget" style="display: block;">
+                                <div class="alert-box info-alert" style="margin: 0; background: rgba(16, 185, 129, 0.02); border-color: rgba(16, 185, 129, 0.1); padding: 16px; border-radius: 8px; display: flex; align-items: flex-start; gap: 10px;">
+                                    <i class="fa-solid fa-circle-info text-emerald" style="font-size: 16px; margin-top: 2px;"></i>
+                                    <div style="font-size: 12.5px; line-height: 1.5; color: #94a3b8;">
+                                        <strong>Sustrato Sólido (Agar):</strong> La turbidimetría celular (OD₆₀₀) no es aplicable para cultivos fijos en agar. Se procede directamente con la separación y extracción de la biomasa micelial húmeda cosechada de la placa Petri.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <!-- Summary of biomass -->
-                        <div class="status-summary-box">
-                            <div class="summary-row">
-                                <span>Cepa Incubada:</span>
-                                <strong id="ext-summary-cepa">-</strong>
-                            </div>
-                            <div class="summary-row">
-                                <span>Medio / Crecimiento:</span>
-                                <strong id="ext-summary-crecimiento">-</strong>
-                            </div>
-                            <div class="summary-row">
-                                <span>Biomasa Cosechada:</span>
-                                <strong class="text-emerald" id="ext-summary-biomasa">0.00 g</strong>
-                            </div>
-                        </div>
 
-                        <!-- Solvent Select -->
-                        <div class="input-group">
-                            <label class="input-label"><i class="fa-solid fa-whiskey-glass"></i> Seleccionar Solvente Orgánico</label>
-                            <div class="radio-group-cards">
-                                <label class="radio-card-option">
-                                    <input type="radio" name="solvente-select" value="EtOAc" checked>
-                                    <div class="radio-card-content">
-                                        <span class="radio-title">Acetato de Etilo (EtOAc)</span>
-                                        <span class="radio-desc">Polaridad media. Altamente eficaz para azafilonas.</span>
-                                    </div>
-                                </label>
-                                <label class="radio-card-option">
-                                    <input type="radio" name="solvente-select" value="MeOH">
-                                    <div class="radio-card-content">
-                                        <span class="radio-title">Metanol (MeOH)</span>
-                                        <span class="radio-desc">Orgánico polar. Excelente poder disolvente y arrastre.</span>
-                                    </div>
-                                </label>
-                                <label class="radio-card-option">
-                                    <input type="radio" name="solvente-select" value="H2O">
-                                    <div class="radio-card-content">
-                                        <span class="radio-title">Agua Destilada (H₂O)</span>
-                                        <span class="radio-desc">Polar. Los pigmentos son mayormente hidrófobos.</span>
-                                    </div>
-                                </label>
-                                <label class="radio-card-option">
-                                    <input type="radio" name="solvente-select" value="Hex">
-                                    <div class="radio-card-content">
-                                        <span class="radio-title">n-Hexano (Hex)</span>
-                                        <span class="radio-desc">No polar. Baja solubilidad para policétidos conjugados.</span>
-                                    </div>
-                                </label>
-                            </div>
+                    <!-- Extraction controls card -->
+                    <div class="card glass-card">
+                        <div class="card-header">
+                            <h2><i class="fa-solid fa-mortar-pestle text-purple"></i> 2. Protocolo de Extracción</h2>
+                            <p class="card-desc">Separa químicamente los pigmentos de la biomasa celular cosechada.</p>
                         </div>
+                        <div class="card-body">
+                            <!-- Summary of biomass -->
+                            <div class="status-summary-box">
+                                <div class="summary-row">
+                                    <span>Cepa Incubada:</span>
+                                    <strong id="ext-summary-cepa">-</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Medio / Crecimiento:</span>
+                                    <strong id="ext-summary-crecimiento">-</strong>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Biomasa Cosechada:</span>
+                                    <strong class="text-emerald" id="ext-summary-biomasa">0.00 g</strong>
+                                </div>
+                            </div>
 
-                        <button id="btn-filtrar" class="btn-primary ripple">
-                            <i class="fa-solid fa-arrows-spin"></i> Homogeneizar y Centrifugar
-                        </button>
+                            <!-- Solvent Select -->
+                            <div class="input-group">
+                                <label class="input-label"><i class="fa-solid fa-whiskey-glass"></i> Seleccionar Solvente Orgánico</label>
+                                <div class="radio-group-cards">
+                                    <label class="radio-card-option">
+                                        <input type="radio" name="solvente-select" value="EtOAc" checked>
+                                        <div class="radio-card-content">
+                                            <span class="radio-title">Acetato de Etilo (EtOAc)</span>
+                                            <span class="radio-desc">Polaridad media. Altamente eficaz para azafilonas.</span>
+                                        </div>
+                                    </label>
+                                    <label class="radio-card-option">
+                                        <input type="radio" name="solvente-select" value="MeOH">
+                                        <div class="radio-card-content">
+                                            <span class="radio-title">Metanol (MeOH)</span>
+                                            <span class="radio-desc">Orgánico polar. Excelente poder disolvente y arrastre.</span>
+                                        </div>
+                                    </label>
+                                    <label class="radio-card-option">
+                                        <input type="radio" name="solvente-select" value="H2O">
+                                        <div class="radio-card-content">
+                                            <span class="radio-title">Agua Destilada (H₂O)</span>
+                                            <span class="radio-desc">Polar. Los pigmentos son mayormente hidrófobos.</span>
+                                        </div>
+                                    </label>
+                                    <label class="radio-card-option">
+                                        <input type="radio" name="solvente-select" value="Hex">
+                                        <div class="radio-card-content">
+                                            <span class="radio-title">n-Hexano (Hex)</span>
+                                            <span class="radio-desc">No polar. Baja solubilidad para policétidos conjugados.</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button id="btn-filtrar" class="btn-primary ripple" disabled>
+                                <i class="fa-solid fa-arrows-spin"></i> Homogeneizar y Centrifugar
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -691,7 +718,7 @@
                 <div class="card glass-card panel-left">
                     <div class="card-header">
                         <h2><i class="fa-solid fa-sliders text-neon"></i> Controles del Microscopio</h2>
-                        <p class="card-desc">Enfoca y analiza las muestras celulares o contaminaciones biológicas.</p>
+                        <p class="card-desc">Enfoca y analiza las muestras conidiales o contaminaciones biológicas.</p>
                     </div>
                     <div class="card-body">
                         
@@ -721,81 +748,68 @@
                         <!-- Micrometric Focus Slider -->
                         <div class="input-group">
                             <div class="slider-header">
-                                <label class="input-label"><i class="fa-solid fa-expand"></i> Tornillo Micrométrico (Enfoque)</label>
-                                <span class="slider-value" id="focus-val" style="background: rgba(52, 211, 153, 0.1); color: #34d399;">15%</span>
+                                <label class="input-label"><i class="fa-solid fa-circle-nodes"></i> Enfoque Micrométrico</label>
+                                <span class="slider-value" id="focus-val">15</span>
                             </div>
-                            <input type="range" id="focus-slider" min="0" max="100" value="15" class="custom-range" style="accent-color: #34d399;">
+                            <input type="range" id="focus-slider" min="0" max="100" value="15" class="custom-range">
                             <div class="slider-labels">
-                                <span>Desenfoque Izq</span>
-                                <span>NÍTIDO (50%)</span>
-                                <span>Desenfoque Der</span>
+                                <span>Muy Borroso</span>
+                                <span>Óptimo (50)</span>
+                                <span>Borroso</span>
                             </div>
                         </div>
 
-                        <div class="highlight-info-box" style="margin-top: 15px; border-left-color: #34d399; background: rgba(52, 211, 153, 0.02);">
-                            <h4><i class="fa-solid fa-circle-question"></i> Guía de Identificación:</h4>
-                            <p id="microscope-guide-text">Cargando portaobjetos de Penicillium. Observa los filamentos tabicados (septados).</p>
+                        <div class="alert-box warning-alert" id="focus-alert">
+                            <i class="fa-solid fa-circle-exclamation"></i> Ajusta el mando de enfoque para resolver las estructuras.
+                        </div>
+
+                        <!-- Microscope uploader zone -->
+                        <div class="upload-dropzone" id="micro-upload-zone" style="margin-top: 15px; border-style: dotted; border-width: 1px; padding: 12px;">
+                            <i class="fa-solid fa-upload cloud-upload-icon" style="font-size: 18px; margin-bottom: 5px;"></i>
+                            <div class="upload-zone-text" style="font-size: 11px;">
+                                <h4 style="margin:0;">Subir Imagen de tu Microscopio Real</h4>
+                                <p style="margin:2px 0 0 0; font-size:10px;">Adjunta tus observaciones físicas</p>
+                            </div>
+                            <input type="file" id="micro-upload-input" accept="image/*" class="file-hidden-input">
+                        </div>
+
+                        <div class="theory-box-mini font-outfit" id="microscope-guide-text">
+                            Cargando guía de microscopía...
                         </div>
                     </div>
                 </div>
 
-                <!-- Microscope Viewport -->
+                <!-- Microscope view area -->
                 <div class="card glass-card panel-right">
                     <div class="card-header">
-                        <h2><i class="fa-solid fa-circle-notch text-neon"></i> Ocular del Microscopio Óptico</h2>
-                        <div class="status-indicator">
-                            <span class="pulse-dot green" id="micro-status-dot"></span>
-                            <span id="micro-status-text">Muestra Cargada</span>
-                        </div>
+                        <h2><i class="fa-solid fa-circle-dot text-neon"></i> Ocular del Microscopio Virtual</h2>
                     </div>
-                    <div class="card-body micro-display-area">
+                    <div class="card-body ocular-body-area">
                         
-                        <!-- Circular Microscope Ocular -->
-                        <div class="microscope-ocular-frame">
-                            <div class="ocular-glow-ring">
-                                <div class="ocular-viewport-inner" id="ocular-view-element">
-                                    <canvas id="canvas-microscopio" class="microscope-canvas"></canvas>
-                                    <!-- Blur overlay filter will be applied dynamically -->
-                                    <div class="ocular-light-lens"></div>
-                                    <div class="ocular-reticle"></div>
-                                </div>
+                        <div class="microscope-structure-wrapper">
+                            <div class="microscope-eyepiece">
+                                <div class="ocular-reticle"></div>
+                                <div class="specimen-layer" id="ocular-view-element"></div>
                             </div>
                         </div>
 
-                        <!-- Focus hint -->
-                        <div class="focus-alert-box font-mono" id="focus-alert">
-                            <i class="fa-solid fa-circle-exclamation"></i> IMAGEN DESENFOCADA. Ajusta el tornillo micrométrico en los controles de la izquierda.
-                        </div>
-
-                        <!-- Microscope Gallery Upload -->
-                        <div class="microscope-evidence-uploader" style="width: 100%; margin-top: 20px;">
-                            <div class="upload-dropzone" id="micro-upload-zone" style="padding: 15px; border-color: rgba(52, 211, 153, 0.25); background: rgba(52, 211, 153, 0.01);">
-                                <i class="fa-solid fa-camera cloud-upload-icon" style="color: #34d399; font-size: 24px;"></i>
-                                <div class="upload-zone-text">
-                                    <h3>Guardar Captura del Microscopio</h3>
-                                    <p class="font-outfit" style="font-size: 11px;">Sube tus imágenes reales tomadas con tu celular en el microscopio físico para catalogar.</p>
-                                </div>
-                                <input type="file" id="micro-upload-input" accept="image/*" class="file-hidden-input">
-                            </div>
-                        </div>
-
-                        <button id="btn-proceder-bitacora" class="btn-primary ripple" style="margin-top: 10px;">
-                            <i class="fa-solid fa-book-open"></i> Abrir Bitácora & Cuestionario <i class="fa-solid fa-arrow-right"></i>
+                        <button id="btn-proceder-bitacora" class="btn-primary ripple" style="margin-top: 15px;">
+                            <i class="fa-solid fa-book"></i> Llevar Ensayos a Bitácora <i class="fa-solid fa-arrow-right"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- STEP 6: LABORATORY NOTEBOOK & GALLERY & QUESTIONNAIRE -->
+        <!-- STEP 6: LOGS AND ACADEMIC QUESTIONNAIRE -->
         <section id="panel-bitacora" class="panel-section">
-            <div class="layout-vertical animate-slide-in">
+            <div class="layout-vertical">
                 
-                <!-- Section 6.1: Interactive Notebook -->
+                <!-- Section 6.1: Simulated runs table -->
                 <div class="card glass-card" style="margin-bottom: 25px;">
                     <div class="card-header">
-                        <h2><i class="fa-solid fa-book text-emerald"></i> Bitácora Digital de Ensayos Científicos</h2>
-                        <p class="card-desc">Historial completo de experimentos y simulaciones realizadas en esta sesión (Guardado en `localStorage`).</p>
+                        <h2><i class="fa-solid fa-clipboard-list text-emerald"></i> Registro Analítico de Ensayos Realizados</h2>
+                        <p class="card-desc">Base de datos de bioprocesos. Registra automáticamente cada elución y lectura fúngica.</p>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive">
@@ -812,7 +826,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="table-logs-body">
-                                    <!-- Log rows will dynamically insert here -->
                                     <tr class="empty-row-placeholder">
                                         <td colspan="7"><i class="fa-solid fa-folder-open"></i> Aún no has registrado ensayos. Completa una simulación y haz clic en "Registrar Resultados".</td>
                                     </tr>
@@ -825,7 +838,7 @@
                     </div>
                 </div>
 
-                <!-- NEW: Cuestionario del Proyecto de Aula -->
+                <!-- Cuestionario del Proyecto de Aula -->
                 <div class="card glass-card" style="margin-bottom: 25px;">
                     <div class="card-header">
                         <h2><i class="fa-solid fa-graduation-cap text-cyan"></i> Cuestionario de Recopilación - Proyecto de Aula (Penicillium sp.)</h2>
@@ -843,13 +856,10 @@
                                     <div class="saved-answer-box" id="saved-ans-1">
                                         <p class="answer-placeholder"><em>Aún no has guardado una respuesta para esta pregunta. Haz clic en "Editar Respuesta" abajo para redactar.</em></p>
                                     </div>
-                                    <div class="attached-img-box" id="attached-img-1" style="display: none;">
-                                        <!-- Attached Base64 image displays here -->
-                                    </div>
+                                    <div class="attached-img-box" id="attached-img-1" style="display: none;"></div>
                                     <div class="edit-answer-form" id="edit-form-1" style="display: none;">
                                         <textarea class="q-textarea font-outfit" id="q-input-1" placeholder="Escribe tu fundamentación fúngica aquí (Ej: Penicillium sp. exhibe crecimiento óptimo a 25°C. El estrés térmico >37°C detiene la germinación y desnaturaliza las enzimas policétido sintasas (PKS), inhibiendo pigmentos...)"></textarea>
                                         
-                                        <!-- Photo attachment sub-section -->
                                         <div class="q-photo-attacher-row">
                                             <button class="btn-secondary small-btn btn-trigger-file" data-target-input="q-file-1"><i class="fa-solid fa-image"></i> Adjuntar Foto Real</button>
                                             <input type="file" id="q-file-1" accept="image/*" class="file-hidden-input q-file-uploader" data-q-index="1">
@@ -1006,7 +1016,6 @@
                             <!-- Static Polaroid A (Pre-loaded: Petri culture) -->
                             <div class="polaroid-card">
                                 <div class="polaroid-img-wrapper">
-                                    <!-- We draw a canvas micrographic or culture on the fly to avoid external broken links -->
                                     <canvas id="pre-img-culture" width="300" height="230" class="polaroid-canvas"></canvas>
                                     <span class="img-badge font-mono">PRE-CARGADO</span>
                                 </div>
@@ -1042,8 +1051,6 @@
                                     <span class="polaroid-date font-mono">Cromatograma</span>
                                 </div>
                             </div>
-
-                            <!-- User uploaded polaroids will inject here -->
 
                         </div>
                     </div>
@@ -1111,8 +1118,8 @@
                     </div>
                 </div>
 
-                <!-- NEW: INFLUENCIA DE LAS PRUEBAS CIENTÍFICAS -->
-                <div class="card glass-card" style="border-left: 3px solid var(--neon-purple); background: rgba(168, 85, 247, 0.02);">
+                <!-- ACADEMIC INFLUENCE SUMMARY -->
+                <div class="card glass-card" style="border-left: 3px solid var(--neon-purple); background: rgba(168, 85, 247, 0.02); margin-bottom: 25px;">
                     <div class="card-header">
                         <h2><i class="fa-solid fa-circle-info text-purple"></i> Influencia de cada Prueba en la Determinación de Pigmentos en *Penicillium*</h2>
                         <p class="card-desc">Fundamentos químicos, físicos y ópticos basados en literatura científica indexada.</p>
@@ -1137,7 +1144,7 @@
                                     </li>
                                     <li style="border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
                                         <strong class="text-pink" style="font-size: 15px;"><i class="fa-solid fa-chart-line"></i> 4. Espectroscopía UV-Vis (Transición Cuántica y Estructura Conyugada):</strong><br>
-                                        La transmitancia y absorbancia en el espectrofotómetro verifican la estructura molecular y la presencia de **sistemas de dobles enlaces conjugados ($\text{C}=\text{C}$)**. Estos electrones deslocalizados absorben fotones específicos del rango visible para excitarse ($\pi \rightarrow \pi^*$). La espectroscopía determina el pico óptico de absorción máxima **($\lambda_{max}$)**, el cual actúa como la "huella dactilar" del pigmento. La Crisogina de Penicillium absorbe en luz azul espectral con un pico a **$390\text{ nm}$** (percibiéndose amarilla), mientras que las azafilonas rojas absorben en el espectro verde con un pico claro a **$505\text{ nm}$** (percibiéndose carmesí).
+                                        La transmitancia y absorbancia en el espectrofotómetro verifican la estructura molecular y la presencia de **sistemas de dobles enlaces conjugados ($\text{C}=\text{C}$)**. Estos electrones deslocalizados absorben fotones específicos del rango visible para excitarse ($\pi \rightarrow \pi^*$). La espectroscopía determina el pico óptico de absorción máxima **($\lambda_{max}$)** del cromóforo. La Crisogina de Penicillium absorbe en luz azul espectral con un pico a **$390\text{ nm}$** (percibiéndose amarilla), mientras que las azafilonas rojas absorben en el espectro verde con un pico claro a **$505\text{ nm}$** (percibiéndose carmesí).
                                     </li>
                                     <li style="padding-bottom: 4px;">
                                         <strong class="text-neon" style="font-size: 15px;"><i class="fa-solid fa-microscope"></i> 5. Microscopía Óptica (Control de Asepsia y Aislamiento):</strong><br>
@@ -1220,6 +1227,17 @@
                                 <p class="paper-authors">Sardaryan, E., et al. (2004) — <strong>Applied Microbiology and Biotechnology</strong>, 65(3), 252-258.</p>
                                 <p class="paper-summary">Este artículo describe experimentalmente cómo cultivar cepas silvestres del género <em>Penicillium</em> en reactores controlados a 25°C. Comprueba la extracción eficiente de la biomasa con solventes como acetato de etilo y metanol, y reporta su absorción en el espectro visible a 505 nm.</p>
                                 <a href="https://doi.org/10.1007/s00253-004-1620-6" target="_blank" class="paper-link font-mono"><i class="fa-solid fa-arrow-up-right-from-square"></i> DOI: 10.1007/s00253-004-1620-6</a>
+                            </div>
+                        </div>
+
+                        <!-- NEW: Gunasekaran & Poorniammal 2008 Paper -->
+                        <div class="paper-entry animate-slide-in" style="animation-delay: 0.1s;">
+                            <div class="paper-icon"><i class="fa-regular fa-file-lines text-emerald"></i></div>
+                            <div class="paper-details">
+                                <h3 class="paper-title">Optimization of fermentation conditions for red pigment production from Penicillium sp. under submerged cultivation.</h3>
+                                <p class="paper-authors">Gunasekaran, S. and Poorniammal, R. (2008) — <strong>African Journal of Biotechnology</strong>, 7(12), 1894-1898.</p>
+                                <p class="paper-summary">Este estudio clave detalla los parámetros de agitación (200 rpm), pH (9.0) y temperatura óptima (30°C) para la biosíntesis de pigmentos antraquinónicos solubles de color rojo en fermentadores sumergidos líquidos de <em>Penicillium sp.</em> Proporciona la base de cálculo biológico para nuestro analizador de turbidez OD₆₀₀ en caldos.</p>
+                                <a href="https://doi.org/10.5897/AJB08.181" target="_blank" class="paper-link font-mono"><i class="fa-solid fa-arrow-up-right-from-square"></i> DOI: 10.5897/AJB08.181</a>
                             </div>
                         </div>
 
